@@ -1,7 +1,9 @@
 package roomescape.login.request;
 
+import jakarta.validation.constraints.NotNull;
+
 public record LoginRequest(
-        String name,
-        String password
+        @NotNull String name,
+        @NotNull String password
 ) {
 }

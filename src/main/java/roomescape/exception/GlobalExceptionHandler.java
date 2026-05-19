@@ -1,6 +1,7 @@
 package roomescape.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -11,6 +12,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
+        return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         return ResponseEntity.status(errorCode.getHttpStatus())
                 .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));

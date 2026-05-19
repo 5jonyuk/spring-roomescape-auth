@@ -2,6 +2,7 @@ package roomescape.login;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Void>> login(
-            @RequestBody LoginRequest body,
+            @RequestBody @Valid LoginRequest body,
             HttpServletRequest request
     ) {
         AuthenticatedMember member = loginService.login(body.name(), body.password());
