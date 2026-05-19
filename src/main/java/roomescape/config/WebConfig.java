@@ -6,9 +6,9 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import roomescape.common.interceptor.AdminInterceptor;
-import roomescape.common.interceptor.AuthenticationInterceptor;
-import roomescape.common.argumentresolver.LoginMemberArgumentResolver;
+import roomescape.auth.interceptor.AdminInterceptor;
+import roomescape.auth.interceptor.AuthenticationInterceptor;
+import roomescape.auth.argumentresolver.LoginMemberArgumentResolver;
 
 import java.util.List;
 

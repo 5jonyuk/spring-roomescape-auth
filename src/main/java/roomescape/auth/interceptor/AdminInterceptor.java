@@ -1,15 +1,20 @@
-package roomescape.common.interceptor;
+package roomescape.auth.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import roomescape.auth.SessionLoginMemberProvider;
 import roomescape.exception.ErrorCode;
 import roomescape.exception.EscapeRoomException;
+import roomescape.member.AuthenticatedMember;
 
 @Component
-public class AuthenticationInterceptor implements HandlerInterceptor {
+@RequiredArgsConstructor
+public class AdminInterceptor implements HandlerInterceptor {
+
+    private final SessionLoginMemberProvider sessionLoginMemberProvider;
 
     @Override
     public boolean preHandle(
@@ -21,10 +26,10 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        HttpSession session = request.getSession(false);
+        AuthenticatedMember member = sessionLoginMemberProvider.getAuthenticatedMember(request);
 
-        if (session == null || session.getAttribute("loginMember") == null) {
-            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
+        if (!member.isAdmin()) {
+            throw new EscapeRoomException(ErrorCode.FORBIDDEN);
         }
         return true;
     }
