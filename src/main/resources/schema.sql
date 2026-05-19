@@ -25,11 +25,21 @@ CREATE TABLE schedule
     FOREIGN KEY (time_id) REFERENCES reservation_time (id)
 );
 
+CREATE TABLE member
+(
+    id       BIGINT       NOT NULL AUTO_INCREMENT,
+    name     VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role     VARCHAR(50)  NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE reservation
 (
-    id          BIGINT       NOT NULL AUTO_INCREMENT,
-    name        VARCHAR(255) NOT NULL,
+    id          BIGINT NOT NULL AUTO_INCREMENT,
+    member_id   BIGINT NOT NULL,
     schedule_id BIGINT,
     PRIMARY KEY (id),
+    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE RESTRICT,
     FOREIGN KEY (schedule_id) REFERENCES schedule (id) ON DELETE RESTRICT
 );
