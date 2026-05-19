@@ -16,6 +16,17 @@
       </div>
     </header>
 
+    <section id="admin-login-section" class="admin-card">
+      <h2>관리자 로그인</h2>
+      <form id="login-form" class="row-form inline-form">
+        <label>아이디 <input type="text" id="login-name" required></label>
+        <label>비밀번호 <input type="password" id="login-password" required></label>
+        <button type="submit" class="search-button">로그인</button>
+      </form>
+      <p id="auth-status" class="empty-message">관리자 계정으로 로그인하세요.</p>
+    </section>
+
+    <div id="admin-content" class="hidden">
     <details class="admin-section-toggle">
       <summary><h2>테마 관리</h2></summary>
       <div class="admin-grid">
@@ -56,7 +67,6 @@
         <article class="admin-card">
           <h3>예약 추가</h3>
           <form id="reservation-form" class="row-form admin-form">
-            <label>예약자명 <input type="text" id="reservation-name" placeholder="예: kim" required></label>
             <label>날짜 <input type="date" id="reservation-date" required></label>
             <label>시간 ID <input type="number" id="reservation-time-id" min="1" required></label>
             <label>테마 ID <input type="number" id="reservation-theme-id" min="1" required></label>
@@ -68,7 +78,6 @@
           <h3>예약 삭제</h3>
           <form id="reservation-delete-form" class="row-form inline-form">
             <label>예약 ID <input type="number" id="reservation-delete-id" min="1" required></label>
-            <label>예약자명 <input type="text" id="reservation-delete-name" required></label>
             <button type="submit" class="danger-button">예약 삭제</button>
           </form>
         </article>
@@ -137,6 +146,7 @@
       </form>
       <ul id="schedule-list" class="list reservation-list"></ul>
     </details>
+    </div>
 
 <!--    <p id="status" class="status-bar"></p>-->
   </main>

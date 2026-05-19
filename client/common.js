@@ -7,18 +7,22 @@ const resultModalEl = document.getElementById("result-modal");
 const resultTitleEl = document.getElementById("result-title");
 const resultMessageEl = document.getElementById("result-message");
 const resultOkEl = document.getElementById("result-ok");
+const myInfoOpenEl = document.getElementById("my-info-open");
+const authStatusEl = document.getElementById("auth-status");
+const loginOpenEl = document.getElementById("login-open");
+const loginFormEl = document.getElementById("login-form");
+const loginNameEl = document.getElementById("login-name");
+const loginPasswordEl = document.getElementById("login-password");
+const loginModalEl = document.getElementById("login-modal");
+const loginCancelEl = document.getElementById("login-cancel");
 const confirmModalEl = document.getElementById("confirm-modal");
 const confirmTitleEl = document.getElementById("confirm-title");
 const confirmMessageEl = document.getElementById("confirm-message");
 const confirmOkEl = document.getElementById("confirm-ok");
 const confirmCancelEl = document.getElementById("confirm-cancel");
-const myInfoOpenEl = document.getElementById("my-info-open");
-const myInfoModalEl = document.getElementById("my-info-modal");
-const myInfoFormEl = document.getElementById("my-info-form");
-const myInfoNameEl = document.getElementById("my-info-name");
-const myInfoCancelEl = document.getElementById("my-info-cancel");
 const myReservationOwnerEl = document.getElementById("my-reservation-owner");
 const myReservationCardsEl = document.getElementById("my-reservation-cards");
+const myReservationSectionEl = document.getElementById("my-reservation-section");
 const editReservationModalEl = document.getElementById("edit-reservation-modal");
 const editReservationFormEl = document.getElementById("edit-reservation-form");
 const editReservationIdEl = document.getElementById("edit-reservation-id");
@@ -30,9 +34,39 @@ let selectedThemeId = null;
 let selectedTimeId = null;
 let selectedTimeLabel = null;
 let selectedThemeName = null;
-let myReservationName = null;
 let editingReservation = null;
 let selectedEditTimeId = null;
+let currentLoginName = null;
+let isAuthenticated = false;
+
+function setCommonAuthState(authenticated) {
+  isAuthenticated = authenticated;
+  loginOpenEl.textContent = authenticated ? "로그아웃" : "로그인";
+  const selectors = [
+    "#theme-by-date-form input",
+    "#theme-by-date-form button",
+    "#reservation-form button",
+    "#reservation-form input",
+  ];
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => {
+      el.disabled = !authenticated;
+    });
+  });
+
+  if (!authenticated) {
+    selectedThemeId = null;
+    selectedThemeName = null;
+    selectedTimeId = null;
+    selectedTimeLabel = null;
+    selectedThemeLabelEl.textContent = "테마: 미선택";
+    selectedTimeLabelEl.textContent = "시간: 미선택";
+    myReservationOwnerEl.textContent = "로그인 후 조회됩니다.";
+    myReservationCardsEl.innerHTML = "";
+    myReservationSectionEl.classList.add("hidden");
+    reservationSubmitEl.disabled = true;
+  }
+}
 
 function setStatus(message, isError = false) {
   if (!statusEl) return;
@@ -43,15 +77,26 @@ function setStatus(message, isError = false) {
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     ...options,
   });
   if (response.status === 204) return null;
-  const body = await response.json();
-  if (!response.ok || body.success === false) {
+
+  const raw = await response.text();
+  let body = null;
+  if (raw) {
+    try {
+      body = JSON.parse(raw);
+    } catch (error) {
+      body = null;
+    }
+  }
+
+  if (!response.ok || body?.success === false) {
     const message = body?.error?.message || `요청 실패: ${response.status}`;
     throw new Error(message);
   }
-  return body.data;
+  return body?.data ?? null;
 }
 
 function showResultModal({ title, message, isError = false }) {
@@ -204,7 +249,7 @@ function renderMyReservationCards(reservations) {
     card.innerHTML = `
       <div class="reservation-card-head">
         <div>
-          <strong>${reservation.name}</strong>
+          <strong>${reservation.memberName}</strong>
           <p>#${reservation.id}</p>
         </div>
         <div class="menu-wrapper">
@@ -234,10 +279,10 @@ function renderMyReservationCards(reservations) {
   });
 }
 
-async function loadMyReservations(name) {
-  const reservations = await api(`/reservations?name=${encodeURIComponent(name)}`);
-  myReservationName = name;
-  myReservationOwnerEl.textContent = `${name}님의 예약 목록`;
+async function loadMyReservations() {
+  if (!isAuthenticated) return;
+  const reservations = await api("/reservations/me");
+  myReservationOwnerEl.textContent = `${currentLoginName ?? "현재 사용자"}님의 예약 목록`;
   renderMyReservationCards(reservations);
 }
 
@@ -342,11 +387,13 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
       });
       return;
     }
-    const name = document.getElementById("reservation-name").value;
     const date = document.getElementById("theme-date").value;
+    if (!currentLoginName) {
+      throw new Error("로그인 후 예약할 수 있습니다.");
+    }
     const confirmed = await confirmAction({
       title: "예약 확인",
-      message: `예약자 ${name}\n날짜 ${date}\n테마 ${selectedThemeName}\n시간 ${selectedTimeLabel}\n\n예약하시겠습니까?`,
+      message: `예약자 ${currentLoginName}\n날짜 ${date}\n테마 ${selectedThemeName}\n시간 ${selectedTimeLabel}\n\n예약하시겠습니까?`,
       okLabel: "예약",
     });
     if (!confirmed) {
@@ -357,18 +404,17 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
     await api("/reservations", {
       method: "POST",
       body: JSON.stringify({
-        name,
         date,
         timeId: selectedTimeId,
         themeId: selectedThemeId,
       }),
     });
-    setStatus(`예약 완료: ${name} / ${date} / ${selectedTimeLabel}`);
+    setStatus(`예약 완료: ${currentLoginName} / ${date} / ${selectedTimeLabel}`);
     await showResultModal({
       title: "예약 성공",
-      message: `${name}님의 예약이 완료되었습니다.`,
+      message: `${currentLoginName}님의 예약이 완료되었습니다.`,
     });
-    document.getElementById("reservation-name").value = "";
+    await loadMyReservations();
     const items = await api(`/times/availability?date=${date}&themeId=${selectedThemeId}`);
     renderAvailableTimes(items);
   } catch (error) {
@@ -388,27 +434,6 @@ document.getElementById("popular-refresh").addEventListener("click", async () =>
     setStatus("인기 테마 조회 완료");
   } catch (error) {
     await showErrorModal("인기 테마 조회 실패", error);
-  }
-});
-
-myInfoOpenEl.addEventListener("click", () => {
-  myInfoModalEl.classList.remove("hidden");
-  myInfoNameEl.focus();
-});
-
-myInfoCancelEl.addEventListener("click", () => {
-  myInfoModalEl.classList.add("hidden");
-});
-
-myInfoFormEl.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  try {
-    const name = myInfoNameEl.value.trim();
-    await loadMyReservations(name);
-    myInfoModalEl.classList.add("hidden");
-    setStatus(`${name} 예약 조회 완료`);
-  } catch (error) {
-    await showErrorModal("내 예약 조회 실패", error);
   }
 });
 
@@ -449,7 +474,6 @@ myReservationCardsEl.addEventListener("click", async (e) => {
 
   closeMenuPanels();
   try {
-    if (!myReservationName) throw new Error("예약자 이름 정보가 없습니다. 내정보를 다시 조회해주세요.");
     const id = deleteButton.dataset.deleteId;
     const confirmed = await confirmAction({
       title: "예약 삭제 확인",
@@ -460,8 +484,8 @@ myReservationCardsEl.addEventListener("click", async (e) => {
     if (!confirmed) {
       return;
     }
-    await api(`/reservations/${id}?name=${encodeURIComponent(myReservationName)}`, { method: "DELETE" });
-    await loadMyReservations(myReservationName);
+    await api(`/reservations/${id}`, { method: "DELETE" });
+    await loadMyReservations();
     setStatus(`예약 #${id} 삭제 완료`);
     await showResultModal({
       title: "예약 삭제 성공",
@@ -487,10 +511,9 @@ editReservationDateEl.addEventListener("change", async () => {
 editReservationFormEl.addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
-    if (!myReservationName) throw new Error("예약자 이름 정보가 없습니다. 내정보를 다시 조회해주세요.");
     const id = editReservationIdEl.value;
     if (!selectedEditTimeId) throw new Error("수정할 시간을 선택해주세요.");
-    await api(`/reservations/${id}?name=${encodeURIComponent(myReservationName)}`, {
+    await api(`/reservations/${id}`, {
       method: "PATCH",
       body: JSON.stringify({
         date: editReservationDateEl.value,
@@ -498,7 +521,7 @@ editReservationFormEl.addEventListener("submit", async (e) => {
       }),
     });
     editReservationModalEl.classList.add("hidden");
-    await loadMyReservations(myReservationName);
+    await loadMyReservations();
     setStatus(`예약 #${id} 수정 완료`);
     await showResultModal({
       title: "예약 수정 성공",
@@ -520,4 +543,64 @@ function setTodayDefault() {
   document.getElementById("theme-date").value = today;
 }
 
+loginFormEl.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    const name = loginNameEl.value.trim();
+    const password = loginPasswordEl.value;
+    await api("/login", {
+      method: "POST",
+      body: JSON.stringify({ name, password }),
+    });
+    currentLoginName = name;
+    setCommonAuthState(true);
+    authStatusEl.textContent = `${name} 로그인됨`;
+    loginModalEl.classList.add("hidden");
+    setStatus("로그인 성공");
+  } catch (error) {
+    await showErrorModal("로그인 실패", error);
+  }
+});
+
+myInfoOpenEl.addEventListener("click", async () => {
+  try {
+    if (!isAuthenticated) {
+      throw new Error("로그인 후 내정보를 조회할 수 있습니다.");
+    }
+    const willOpen = myReservationSectionEl.classList.contains("hidden");
+    myReservationSectionEl.classList.toggle("hidden");
+    if (!willOpen) {
+      setStatus("내 예약 정보 닫힘");
+      return;
+    }
+    await loadMyReservations();
+    setStatus("내 예약 조회 완료");
+  } catch (error) {
+    await showErrorModal("내 예약 조회 실패", error);
+  }
+});
+
+loginOpenEl.addEventListener("click", async () => {
+  if (!isAuthenticated) {
+    loginModalEl.classList.remove("hidden");
+    loginNameEl.focus();
+    return;
+  }
+
+  try {
+    await api("/logout", { method: "DELETE" });
+    currentLoginName = null;
+    authStatusEl.textContent = "로그인이 필요합니다.";
+    setCommonAuthState(false);
+    setStatus("로그아웃 성공");
+  } catch (error) {
+    await showErrorModal("로그아웃 실패", error);
+  }
+});
+
+loginCancelEl.addEventListener("click", () => {
+  loginModalEl.classList.add("hidden");
+});
+
 setTodayDefault();
+setCommonAuthState(false);

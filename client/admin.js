@@ -1,5 +1,11 @@
 const API_BASE = new URLSearchParams(window.location.search).get("apiBase") || "http://localhost:8080";
 const statusEl = document.getElementById("status");
+const authStatusEl = document.getElementById("auth-status");
+const loginFormEl = document.getElementById("login-form");
+const loginNameEl = document.getElementById("login-name");
+const loginPasswordEl = document.getElementById("login-password");
+const adminLoginSectionEl = document.getElementById("admin-login-section");
+const adminContentEl = document.getElementById("admin-content");
 const confirmModalEl = document.getElementById("confirm-modal");
 const confirmTitleEl = document.getElementById("confirm-title");
 const confirmMessageEl = document.getElementById("confirm-message");
@@ -10,6 +16,11 @@ const resultTitleEl = document.getElementById("result-title");
 const resultMessageEl = document.getElementById("result-message");
 const resultOkEl = document.getElementById("result-ok");
 
+function setAdminAuthState(authenticated) {
+  adminLoginSectionEl.classList.toggle("hidden", authenticated);
+  adminContentEl.classList.toggle("hidden", !authenticated);
+}
+
 function setStatus(message, isError = false) {
   if (!statusEl) return;
   statusEl.textContent = message;
@@ -19,15 +30,26 @@ function setStatus(message, isError = false) {
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     ...options,
   });
   if (response.status === 204) return null;
-  const body = await response.json();
-  if (!response.ok || body.success === false) {
+
+  const raw = await response.text();
+  let body = null;
+  if (raw) {
+    try {
+      body = JSON.parse(raw);
+    } catch (error) {
+      body = null;
+    }
+  }
+
+  if (!response.ok || body?.success === false) {
     const message = body?.error?.message || `요청 실패: ${response.status}`;
     throw new Error(message);
   }
-  return body.data;
+  return body?.data ?? null;
 }
 
 function confirmAction({ title, message, okLabel = "확인", okDanger = false }) {
@@ -110,7 +132,7 @@ function renderReservationList(reservations) {
   }
   reservations.forEach((reservation) => {
     const li = document.createElement("li");
-    li.innerHTML = `#${reservation.id} ${reservation.name} / ${reservation.date} / ${reservation.time.time} / themeId=${reservation.theme?.id}`;
+    li.innerHTML = `#${reservation.id} ${reservation.memberName} / ${reservation.date} / ${reservation.time.time} / themeId=${reservation.theme?.id}`;
     list.appendChild(li);
   });
 }
@@ -261,13 +283,12 @@ document.getElementById("theme-delete-form").addEventListener("submit", async (e
 document.getElementById("reservation-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
-    const name = document.getElementById("reservation-name").value;
     const date = document.getElementById("reservation-date").value;
     const timeId = Number(document.getElementById("reservation-time-id").value);
     const themeId = Number(document.getElementById("reservation-theme-id").value);
     const confirmed = await confirmAction({
       title: "예약 추가 확인",
-      message: `${name} / ${date} / timeId ${timeId} / themeId ${themeId} 예약을 추가할까요?`,
+      message: `${date} / timeId ${timeId} / themeId ${themeId} 예약을 추가할까요?`,
       okLabel: "추가",
     });
     if (!confirmed) {
@@ -278,7 +299,6 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
     await api("/reservations", {
       method: "POST",
       body: JSON.stringify({
-        name,
         date,
         timeId,
         themeId,
@@ -288,7 +308,7 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
     setStatus("예약 추가 완료");
     await showResultModal({
       title: "예약 추가 성공",
-      message: `예약자 ${name}님의 예약이 추가되었습니다.`,
+      message: "예약이 추가되었습니다.",
     });
   } catch (error) {
     setStatus(error.message, true);
@@ -304,10 +324,9 @@ document.getElementById("reservation-delete-form").addEventListener("submit", as
   e.preventDefault();
   try {
     const id = document.getElementById("reservation-delete-id").value;
-    const name = document.getElementById("reservation-delete-name").value;
     const confirmed = await confirmAction({
       title: "예약 삭제 확인",
-      message: `예약 ID ${id} / 예약자 ${name} 예약을 삭제할까요?`,
+      message: `예약 ID ${id} 예약을 삭제할까요?`,
       okLabel: "삭제",
       okDanger: true,
     });
@@ -316,7 +335,7 @@ document.getElementById("reservation-delete-form").addEventListener("submit", as
       return;
     }
 
-    await api(`/reservations/${id}?name=${encodeURIComponent(name)}`, { method: "DELETE" });
+    await api(`/reservations/${id}`, { method: "DELETE" });
     await loadReservations();
     setStatus(`예약 #${id} 삭제 완료`);
     e.target.reset();
@@ -523,4 +542,22 @@ function setTodayDefault() {
   document.getElementById("theme-by-date").value = today;
 }
 
+loginFormEl.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    const name = loginNameEl.value.trim();
+    const password = loginPasswordEl.value;
+    await api("/login", {
+      method: "POST",
+      body: JSON.stringify({ name, password }),
+    });
+    setAdminAuthState(true);
+    authStatusEl.textContent = `${name} 로그인됨`;
+    setStatus("로그인 성공");
+  } catch (error) {
+    await showErrorModal("로그인 실패", error);
+  }
+});
+
 setTodayDefault();
+setAdminAuthState(false);

@@ -11,10 +11,12 @@
   <header class="page-header">
     <h1>방탈출 예약하기</h1>
     <div class="link-row">
-      <button type="button" id="my-info-open" class="link-button">내정보</button>
       <a class="link-button" href="./index.html">홈</a>
+      <button type="button" id="my-info-open" class="link-button">내정보</button>
+      <button type="button" id="login-open" class="link-button">로그인</button>
       <a class="link-button admin-link" href="./admin.html">관리자 페이지</a>
     </div>
+    <p id="auth-status" class="empty-message">로그인이 필요합니다.</p>
   </header>
 
   <!-- 예약 섹션 -->
@@ -44,7 +46,6 @@
       <h3>03. 예약 정보 입력</h3>
     </div>
     <form id="reservation-form" class="row-form reservation-form">
-      <label>예약자 성함 <input type="text" id="reservation-name" placeholder="이름을 입력하세요" required></label>
       <button type="submit" id="reservation-submit" class="primary-button" disabled>지금 예약하기</button>
     </form>
   </section>
@@ -62,9 +63,9 @@
 
   <hr class="divider">
 
-  <section class="my-reservation-section">
+  <section id="my-reservation-section" class="my-reservation-section hidden">
     <h2>내 예약 정보</h2>
-    <p id="my-reservation-owner" class="empty-message">내정보 버튼을 눌러 이름을 입력해주세요.</p>
+    <p id="my-reservation-owner" class="empty-message">로그인 후 조회됩니다.</p>
     <div id="my-reservation-cards" class="reservation-cards"></div>
   </section>
 
@@ -78,21 +79,6 @@
     <div class="modal-actions">
       <button type="button" id="confirm-cancel" class="link-button">취소</button>
       <button type="button" id="confirm-ok" class="danger-button">확인</button>
-    </div>
-  </div>
-</div>
-
-<div id="my-info-modal" class="modal-backdrop hidden">
-  <div class="modal-card">
-    <h3>내정보 조회</h3>
-    <form id="my-info-form" class="row-form admin-form modal-form">
-      <label>이름
-        <input type="text" id="my-info-name" required>
-      </label>
-      <button type="submit" class="search-button">조회</button>
-    </form>
-    <div class="modal-actions">
-      <button type="button" id="my-info-cancel" class="link-button">닫기</button>
     </div>
   </div>
 </div>
@@ -124,6 +110,24 @@
     <p id="result-message" class="modal-message"></p>
     <div class="modal-actions">
       <button type="button" id="result-ok" class="search-button">확인</button>
+    </div>
+  </div>
+</div>
+
+<div id="login-modal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <h3>로그인</h3>
+    <form id="login-form" class="row-form admin-form modal-form">
+      <label>아이디
+        <input type="text" id="login-name" required>
+      </label>
+      <label>비밀번호
+        <input type="password" id="login-password" required>
+      </label>
+      <button type="submit" class="search-button">로그인</button>
+    </form>
+    <div class="modal-actions">
+      <button type="button" id="login-cancel" class="link-button">닫기</button>
     </div>
   </div>
 </div>
