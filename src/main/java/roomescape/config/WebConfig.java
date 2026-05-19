@@ -39,8 +39,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authenticationInterceptor)
-                .addPathPatterns("/reservations/**")
-                .excludePathPatterns("/login");
+                .addPathPatterns("/**")
+                .excludePathPatterns("/login", "/themes/popular");
+
         registry.addInterceptor(adminInterceptor)
                 .addPathPatterns(
                         "/times/**",
@@ -48,9 +49,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/schedules/**"
                 )
                 .excludePathPatterns(
-                        "/themes",
-                        "/themes/popular",
-                        "/times/availability"
+                        "/themes/popular"
                 );
     }
 }
