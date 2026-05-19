@@ -27,6 +27,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:*",
                         "http://127.0.0.1:*"
                 )
+                .allowCredentials(true)
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }
@@ -40,7 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authenticationInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/login", "/themes/popular");
+                .excludePathPatterns("/login", "/logout", "/themes/popular");
 
         registry.addInterceptor(adminInterceptor)
                 .addPathPatterns(
@@ -49,7 +50,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "/schedules/**"
                 )
                 .excludePathPatterns(
-                        "/themes/popular"
+                        "/themes",
+                        "/themes/popular",
+                        "/times/availability"
                 );
     }
 }

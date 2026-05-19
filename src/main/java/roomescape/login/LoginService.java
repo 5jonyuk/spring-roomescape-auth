@@ -9,6 +9,7 @@ import roomescape.member.repository.MemberRepository;
 @Service
 @RequiredArgsConstructor
 public class LoginService {
+
     private final MemberRepository memberRepository;
 
     public AuthenticatedMember login(String name, String password) {
