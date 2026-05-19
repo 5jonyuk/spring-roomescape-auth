@@ -1,6 +1,7 @@
 package roomescape.theme;
 
 import io.restassured.RestAssured;
+import io.restassured.filter.session.SessionFilter;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,14 +39,33 @@ public class ThemeControllerTest {
         RestAssured.port = port;
     }
 
+    private SessionFilter login() {
+        SessionFilter sessionFilter = new SessionFilter();
+        Map<String, Object> loginRequest = new HashMap<>();
+        loginRequest.put("name", "testAdmin");
+        loginRequest.put("password", "test2");
+
+        RestAssured.given().log().all()
+                .filter(sessionFilter)
+                .contentType(ContentType.JSON)
+                .body(loginRequest)
+                .when().post("/login")
+                .then().log().all()
+                .statusCode(200);
+
+        return sessionFilter;
+    }
+
     @Test
     void 테마_저장_API_테스트() {
+        SessionFilter sessionFilter = login();
         Map<String, String> params = new HashMap<>();
         params.put("name", "무서운게 딱 좋아");
         params.put("description", "무서운 분위기의 방탈출");
         params.put("thumbnailUrl", "https://example.com/theme.jpg");
 
         RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .contentType(ContentType.JSON)
                 .body(params)
                 .when().post("/themes")
@@ -55,12 +75,14 @@ public class ThemeControllerTest {
 
     @Test
     void 테마_추가_및_삭제_API_테스트() {
+        SessionFilter sessionFilter = login();
         Map<String, String> params = new HashMap<>();
         params.put("name", "무서운게 딱 좋아");
         params.put("description", "무서운 분위기의 방탈출");
         params.put("thumbnailUrl", "https://example.com/theme.jpg");
 
         RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .contentType(ContentType.JSON)
                 .body(params)
                 .when().post("/themes")
@@ -68,6 +90,7 @@ public class ThemeControllerTest {
                 .statusCode(201);
 
         RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .when().delete("/themes/5")
                 .then().log().all()
                 .statusCode(204);
@@ -75,7 +98,10 @@ public class ThemeControllerTest {
 
     @Test
     void 각_날짜에_존재하는_모든_테마_조회_API_테스트() {
+        SessionFilter sessionFilter = login();
+
         RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .queryParam("date", "2026-05-05")
                 .when().get("/themes")
                 .then().log().all()
@@ -110,7 +136,10 @@ public class ThemeControllerTest {
 
     @Test
     void 테마_전체_조회_API_테스트() {
+        SessionFilter sessionFilter = login();
+
         RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .when().get("/themes")
                 .then().log().all()
                 .statusCode(200)

@@ -1,6 +1,8 @@
 package roomescape;
 
 import io.restassured.RestAssured;
+import io.restassured.filter.session.SessionFilter;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +15,9 @@ import roomescape.reservation.Reservation;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,6 +28,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class H2DatabaseTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    private SessionFilter login() {
+        SessionFilter sessionFilter = new SessionFilter();
+        Map<String, Object> loginRequest = new HashMap<>();
+        loginRequest.put("name", "testAdmin");
+        loginRequest.put("password", "test2");
+
+        RestAssured.given().log().all()
+                .filter(sessionFilter)
+                .body(loginRequest)
+                .contentType(ContentType.JSON)
+                .post("/login")
+                .then().log().all()
+                .statusCode(200);
+
+        return sessionFilter;
+    }
 
     @Test
     void 데이터베이스_연동() {
@@ -38,7 +59,10 @@ public class H2DatabaseTest {
 
     @Test
     void DB_조회_API_전환() {
+        SessionFilter sessionFilter = login();
+
         List<Reservation> reservations = RestAssured.given().log().all()
+                .filter(sessionFilter)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200).extract()
