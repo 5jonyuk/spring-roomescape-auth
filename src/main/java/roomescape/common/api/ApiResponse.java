@@ -1,4 +1,4 @@
-package roomescape.common;
+package roomescape.common.api;
 
 public record ApiResponse<T>(
         boolean success,
