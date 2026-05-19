@@ -15,17 +15,17 @@ public interface ReservationRepository {
 
     Set<Long> findTimeIdByDateAndThemeId(LocalDate date, long themeId);
 
-    List<ReservationDetailProjection> findDetailsByName(String name);
+    List<ReservationDetailProjection> findAllReservationDetailsByMemberId(long memberId);
 
-    void deleteByIdAndName(long id, String name);
+    void deleteByIdAndMemberId(long reservationId, long memberId);
 
-    Optional<ReservationDetailProjection> findDetailByIdAndName(long reservationId, String name);
+    Optional<ReservationDetailProjection> findDetailByIdAndMemberId(long reservationId, long memberId);
 
     boolean existsByScheduleIdAndIdNot(long scheduleId, long reservationId);
 
-    int updateScheduleByIdAndName(long id, String name, long scheduleId);
+    int updateScheduleByIdAndMemberId(long reservationId, long memberId, long scheduleId);
 
-    Optional<Reservation> findByIdAndName(long reservationId, String name);
+    Optional<Reservation> findById(long reservationId);
 
     boolean existsByScheduleId(long scheduleId);
 }

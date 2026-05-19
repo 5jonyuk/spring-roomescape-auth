@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import roomescape.member.Role;
 import roomescape.reservation.Reservation;
 import roomescape.reservation.repository.projection.ReservationDetailProjection;
 
@@ -18,11 +19,16 @@ import java.util.Set;
 @Repository
 @RequiredArgsConstructor
 public class JdbcReservationRepository implements ReservationRepository {
+
     private final NamedParameterJdbcTemplate template;
+
     private final RowMapper<ReservationDetailProjection> reservationDetailFindRowMapper = (resultSet, rowNum) ->
             new ReservationDetailProjection(
                     resultSet.getLong("reservation_id"),
-                    resultSet.getString("reservation_name"),
+                    resultSet.getLong("member_id"),
+                    resultSet.getString("member_name"),
+                    resultSet.getString("member_password"),
+                    Role.valueOf(resultSet.getString("member_role")),
                     resultSet.getDate("date").toLocalDate(),
                     resultSet.getLong("theme_id"),
                     resultSet.getString("theme_name"),
@@ -34,10 +40,10 @@ public class JdbcReservationRepository implements ReservationRepository {
 
     @Override
     public Reservation save(Reservation reservation) {
-        String insertReservationSql = "INSERT INTO reservation(name, schedule_id) VALUES (:name, :scheduleId)";
+        String insertReservationSql = "INSERT INTO reservation(member_id, schedule_id) VALUES (:memberId, :scheduleId)";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("name", reservation.getName())
+                .addValue("memberId", reservation.getMemberId())
                 .addValue("scheduleId", reservation.getScheduleId());
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -48,9 +54,9 @@ public class JdbcReservationRepository implements ReservationRepository {
             throw new IllegalStateException("reservation 저장 후 생성된 ID를 반환받지 못했습니다.");
         }
 
-        return new Reservation(
+        return Reservation.of(
                 keyHolder.getKey().longValue(),
-                reservation.getName(),
+                reservation.getMemberId(),
                 reservation.getScheduleId()
         );
     }
@@ -58,9 +64,12 @@ public class JdbcReservationRepository implements ReservationRepository {
     @Override
     public List<ReservationDetailProjection> findAllDetails() {
         String sql = """
-                SELECT
+                 SELECT
                     r.id AS reservation_id,
-                    r.name AS reservation_name,
+                    m.id AS member_id,
+                    m.name AS member_name,
+                    m.password AS member_password,
+                    m.role AS member_role,
                     s.date,
                     t.id AS theme_id,
                     t.name AS theme_name,
@@ -72,6 +81,7 @@ public class JdbcReservationRepository implements ReservationRepository {
                 JOIN schedule s ON r.schedule_id = s.id
                 JOIN theme t ON s.theme_id = t.id
                 JOIN reservation_time rt ON s.time_id = rt.id
+                JOIN member m ON r.member_id = m.id
                 ORDER BY r.id
                 """;
 
@@ -99,11 +109,14 @@ public class JdbcReservationRepository implements ReservationRepository {
     }
 
     @Override
-    public List<ReservationDetailProjection> findDetailsByName(String name) {
+    public List<ReservationDetailProjection> findAllReservationDetailsByMemberId(long memberId) {
         String sql = """
                 SELECT
                     r.id AS reservation_id,
-                    r.name AS reservation_name,
+                    m.id AS member_id,
+                    m.name AS member_name,
+                    m.password AS member_password,
+                    m.role AS member_role,
                     s.date,
                     t.id AS theme_id,
                     t.name AS theme_name,
@@ -115,50 +128,57 @@ public class JdbcReservationRepository implements ReservationRepository {
                 JOIN schedule s ON r.schedule_id = s.id
                 JOIN theme t ON s.theme_id = t.id
                 JOIN reservation_time rt ON s.time_id = rt.id
-                WHERE r.name = :name
+                JOIN member m ON r.member_id = m.id
+                WHERE m.id = :memberId
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("name", name);
+                .addValue("memberId", memberId);
 
         return template.query(sql, params, reservationDetailFindRowMapper);
     }
 
     @Override
-    public void deleteByIdAndName(long id, String name) {
-        String sql = "DELETE FROM reservation WHERE id = :id AND name = :name";
+    public void deleteByIdAndMemberId(long reservationId, long memberId) {
+        String sql = "DELETE FROM reservation WHERE id = :reservationId AND member_id = :memberId";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("name", name);
+                .addValue("reservationId", reservationId)
+                .addValue("memberId", memberId);
 
         template.update(sql, params);
     }
 
     @Override
-    public Optional<ReservationDetailProjection> findDetailByIdAndName(long reservationId, String name) {
+    public Optional<ReservationDetailProjection> findDetailByIdAndMemberId(long reservationId, long memberId) {
         String sql = """
                 SELECT
-                     r.id AS reservation_id,
-                     r.name AS reservation_name,
-                     s.date,
-                     t.id AS theme_id,
-                     t.name AS theme_name,
-                     t.description AS theme_description,
-                     t.thumbnail_url AS theme_thumbnail_url,
-                     rt.id AS time_id,
-                     rt.start_at
-                 FROM reservation r
-                 JOIN schedule s ON r.schedule_id = s.id
-                 JOIN theme t ON s.theme_id = t.id
-                 JOIN reservation_time rt ON s.time_id = rt.id
-                 WHERE r.id = :id AND r.name = :name
+                    r.id AS reservation_id,
+                    m.id AS member_id,
+                    m.name AS member_name,
+                    m.password AS member_password,
+                    m.role AS member_role,
+                    s.date,
+                    t.id AS theme_id,
+                    t.name AS theme_name,
+                    t.description AS theme_description,
+                    t.thumbnail_url AS theme_thumbnail_url,
+                    rt.id AS time_id,
+                    rt.start_at
+                FROM reservation r
+                JOIN schedule s ON r.schedule_id = s.id
+                JOIN theme t ON s.theme_id = t.id
+                JOIN reservation_time rt ON s.time_id = rt.id
+                JOIN member m ON r.member_id = m.id
+                 WHERE r.id = :id AND m.id = :memberId
                 """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", reservationId)
-                .addValue("name", name);
+                .addValue("memberId", memberId);
 
-        return template.query(sql, params, reservationDetailFindRowMapper).stream().findFirst();
+        return template.query(sql, params, reservationDetailFindRowMapper)
+                .stream()
+                .findFirst();
     }
 
     @Override
@@ -173,32 +193,31 @@ public class JdbcReservationRepository implements ReservationRepository {
     }
 
     @Override
-    public int updateScheduleByIdAndName(long id, String name, long scheduleId) {
+    public int updateScheduleByIdAndMemberId(long reservationId, long memberId, long scheduleId) {
         String sql = """ 
                 UPDATE reservation
                 SET schedule_id = :scheduleId
-                WHERE id = :id AND name = :name
+                WHERE id = :reservationId AND member_id = :memberId
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("name", name)
-                .addValue("scheduleId", scheduleId)
-                .addValue("id", id);
+                .addValue("reservationId", reservationId)
+                .addValue("memberId", memberId)
+                .addValue("scheduleId", scheduleId);
 
         return template.update(sql, params);
     }
 
     @Override
-    public Optional<Reservation> findByIdAndName(long reservationId, String name) {
-        String sql = "SELECT * FROM reservation WHERE id = :id AND name = :name";
+    public Optional<Reservation> findById(long reservationId) {
+        String sql = "SELECT * FROM reservation WHERE id = :id";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("id", reservationId)
-                .addValue("name", name);
+                .addValue("id", reservationId);
 
         return template.query(sql, params,
                 (resultSet, rowNum) -> new Reservation(
                         resultSet.getLong("id"),
-                        resultSet.getString("name"),
+                        resultSet.getLong("member_id"),
                         resultSet.getLong("schedule_id")
                 )
         ).stream().findFirst();

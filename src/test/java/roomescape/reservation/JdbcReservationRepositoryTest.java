@@ -22,53 +22,45 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 @ActiveProfiles("test")
 @Import(JdbcReservationRepository.class)
 class JdbcReservationRepositoryTest {
+
+    private static final long MEMBER_ID = 1L;
+
     @Autowired
     private JdbcReservationRepository reservationRepository;
 
     @Test
     void 예약_저장_레포지토리_테스트() {
-        // given
-        Reservation reservation = new Reservation(null, "브라운", 1L);
+        Reservation reservation = new Reservation(null, MEMBER_ID, 4L);
 
-        // when
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        // then
         assertSoftly(softly -> {
             softly.assertThat(savedReservation).isNotNull();
             softly.assertThat(savedReservation.getId()).isNotNull();
-            softly.assertThat(savedReservation.getName()).isEqualTo("브라운");
-            softly.assertThat(savedReservation.getScheduleId()).isEqualTo(1L);
+            softly.assertThat(savedReservation.getMemberId()).isEqualTo(MEMBER_ID);
+            softly.assertThat(savedReservation.getScheduleId()).isEqualTo(4L);
         });
     }
 
     @Test
     void 전체_예약_상세_조회_레포지토리_테스트() {
-        // given
-        Reservation reservation1 = new Reservation(null, "브라운", 1L);
-        Reservation reservation2 = new Reservation(null, "네오", 2L);
-        Reservation newReservation1 = reservationRepository.save(reservation1);
-        Reservation newReservation2 = reservationRepository.save(reservation2);
+        Reservation reservation = new Reservation(null, MEMBER_ID, 4L);
+        Reservation savedReservation = reservationRepository.save(reservation);
 
-        // when
         List<ReservationDetailProjection> reservations = reservationRepository.findAllDetails();
 
-        // then
-        assertThat(reservations).hasSize(6);
+        assertThat(reservations).hasSize(5);
         assertThat(reservations).extracting(ReservationDetailProjection::id)
-                .contains(newReservation1.getId(), newReservation2.getId());
+                .contains(savedReservation.getId());
     }
 
     @Test
     void 예약_삭제_레포지토리_테스트() {
-        // given
-        Reservation reservation = new Reservation(null, "브라운", 1L);
+        Reservation reservation = new Reservation(null, MEMBER_ID, 4L);
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        // when
-        reservationRepository.deleteByIdAndName(savedReservation.getId(), savedReservation.getName());
+        reservationRepository.deleteByIdAndMemberId(savedReservation.getId(), MEMBER_ID);
 
-        // then
         List<ReservationDetailProjection> reservations = reservationRepository.findAllDetails();
         assertThat(reservations).hasSize(4);
         assertThat(reservations).extracting(ReservationDetailProjection::id)
@@ -78,48 +70,36 @@ class JdbcReservationRepositoryTest {
     @Test
     @DisplayName("이용 가능한 시간을 조회할 수 있다.")
     void findTimeIdByDateAndThemeId_테스트() {
-        // when
         Set<Long> result = reservationRepository.findTimeIdByDateAndThemeId(LocalDate.parse("2026-05-05"), 1L);
 
-        // then
-        assertThat(result).hasSize(1);
         assertThat(result).containsExactlyInAnyOrder(1L);
     }
 
     @Test
-    @DisplayName("특정 이름을 기준으로 해당이름을 가진 예약들을 조회 할 수 있다.")
-    void findDetailsByName_테스트() {
-        // given
-        String name = "a";
+    @DisplayName("특정 회원의 모든 예약 상세를 조회할 수 있다.")
+    void findAllReservationDetailsByMemberId_테스트() {
+        List<ReservationDetailProjection> result = reservationRepository.findAllReservationDetailsByMemberId(MEMBER_ID);
 
-        // when
-        List<ReservationDetailProjection> result = reservationRepository.findDetailsByName(name);
-
-        // then
-        assertThat(result).hasSize(1);
-        assertThat(result).extracting(ReservationDetailProjection::name)
-                .containsExactly(name);
+        assertThat(result).hasSize(4);
+        assertThat(result).extracting(ReservationDetailProjection::memberId)
+                .containsOnly(MEMBER_ID);
     }
 
     @Test
-    @DisplayName("특정이름을 기준으로 해당이름을 가진 예약을 삭제할 수 있다.")
-    void deleteByIdAndName_테스트() {
-        // when
-        reservationRepository.deleteByIdAndName(1, "a");
+    @DisplayName("예약 id와 회원 id가 일치하면 예약을 삭제할 수 있다.")
+    void deleteByIdAndMemberId_테스트() {
+        reservationRepository.deleteByIdAndMemberId(1L, MEMBER_ID);
 
-        // then
         assertThat(reservationRepository.findAllDetails())
                 .extracting(ReservationDetailProjection::id)
                 .doesNotContain(1L);
     }
 
     @Test
-    @DisplayName("이름이 일치하지 않으면 예약은 삭제되지 않는다.")
-    void deleteByIdAndName_이름불일치_테스트() {
-        // when
-        reservationRepository.deleteByIdAndName(1, "x");
+    @DisplayName("회원 id가 일치하지 않으면 예약은 삭제되지 않는다.")
+    void deleteByIdAndMemberId_회원불일치_테스트() {
+        reservationRepository.deleteByIdAndMemberId(1L, 999L);
 
-        // then
         assertThat(reservationRepository.findAllDetails())
                 .extracting(ReservationDetailProjection::id)
                 .contains(1L);
@@ -128,27 +108,28 @@ class JdbcReservationRepositoryTest {
     @Test
     @DisplayName("같은 스케줄에 본인 제외 다른 예약이 있으면 true를 반환한다.")
     void existsByScheduleIdAndIdNot_true반환_테스트() {
-        // when
-        boolean result = reservationRepository.existsByScheduleIdAndIdNot(2, 1);
+        boolean result = reservationRepository.existsByScheduleIdAndIdNot(2L, 1L);
 
-        // then
         assertThat(result).isTrue();
     }
 
     @Test
     @DisplayName("같은 스케줄에 본인 제외 다른 예약이 없으면 false를 반환한다.")
     void existsByScheduleIdAndIdNot_false반환_테스트() {
-        // when
-        boolean result = reservationRepository.existsByScheduleIdAndIdNot(4, 1);
+        boolean result = reservationRepository.existsByScheduleIdAndIdNot(4L, 1L);
 
-        // then
         assertThat(result).isFalse();
     }
 
     @Test
-    @DisplayName("본인의 기존 예약을 변경가능한 스케줄로 변경할 수 있다.")
-    void updateScheduleByIdAndName_테스트() {
-        int affectedRow = reservationRepository.updateScheduleByIdAndName(1L, "a", 4L);
+    @DisplayName("회원 본인의 기존 예약을 변경 가능한 스케줄로 변경할 수 있다.")
+    void updateScheduleByIdAndMemberId_테스트() {
+        int affectedRow = reservationRepository.updateScheduleByIdAndMemberId(1L, MEMBER_ID, 4L);
+
         assertThat(affectedRow).isEqualTo(1);
+        assertThat(reservationRepository.findById(1L))
+                .get()
+                .extracting(Reservation::getScheduleId)
+                .isEqualTo(4L);
     }
 }

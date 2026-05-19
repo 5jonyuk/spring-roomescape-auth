@@ -22,11 +22,11 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final ScheduleService scheduleService;
 
-    public ReservationSaveResponse save(ReservationSaveRequest body) {
+    public ReservationSaveResponse save(ReservationSaveRequest body, long memberId) {
         scheduleService.validateSchedule(body.date(), body.timeId(), body.themeId());
         long scheduleId = scheduleService.findScheduleIdByDateAndTimeIdAndThemeId(body.date(), body.timeId(), body.themeId());
         validateReservationAlreadyExistsNot(scheduleId);
-        Reservation reservation = reservationRepository.save(body.toDomain(scheduleId));
+        Reservation reservation = reservationRepository.save(body.toDomain(memberId, scheduleId));
 
         return ReservationSaveResponse.from(reservation);
     }
@@ -35,24 +35,24 @@ public class ReservationService {
         return ReservationDetailFindResponse.from(reservationRepository.findAllDetails());
     }
 
-    public void deleteByIdAndName(long reservationId, String name) {
-        ReservationDetailProjection reservationDetail = reservationRepository.findDetailByIdAndName(reservationId, name)
+    public void deleteByIdAndMemberId(long reservationId, long memberId) {
+        ReservationDetailProjection reservationDetail = reservationRepository.findDetailByIdAndMemberId(reservationId, memberId)
                 .orElse(null);
         if (reservationDetail == null) {
             return;
         }
         validateNotPast(reservationDetail);
-        reservationRepository.deleteByIdAndName(reservationId, name);
+        reservationRepository.deleteByIdAndMemberId(reservationId, memberId);
     }
 
-    public List<ReservationDetailFindResponse> findDetailsByName(String name) {
-        List<ReservationDetailProjection> reservationDetailProjection = reservationRepository.findDetailsByName(name);
+    public List<ReservationDetailFindResponse> findMyReservations(long memberId) {
+        List<ReservationDetailProjection> reservationDetailProjection = reservationRepository.findAllReservationDetailsByMemberId(memberId);
 
         return ReservationDetailFindResponse.from(reservationDetailProjection);
     }
 
-    public ReservationSaveResponse update(ReservationUpdateRequest body, long reservationId, String name) {
-        ReservationDetailProjection oldReservation = getOldReservationDetailOrThrow(reservationId, name);
+    public ReservationSaveResponse update(ReservationUpdateRequest body, long reservationId, long memberId) {
+        ReservationDetailProjection oldReservation = getOldReservationDetailOrThrow(reservationId, memberId);
         validateNotPast(oldReservation);
         validateNotEmptyUpdateRequest(body);
 
@@ -62,10 +62,10 @@ public class ReservationService {
         scheduleService.validateSchedule(newDate, newTimeId, oldReservation.getThemeId());
         validateDuplicatedReservationNot(reservationId, scheduleId);
 
-        int affectedRow = reservationRepository.updateScheduleByIdAndName(oldReservation.id(), name, scheduleId);
+        int affectedRow = reservationRepository.updateScheduleByIdAndMemberId(oldReservation.id(), memberId, scheduleId);
         validateReservationUpdated(affectedRow);
 
-        return ReservationSaveResponse.from(getNewReservationOrThrow(reservationId, name));
+        return ReservationSaveResponse.from(getNewReservationOrThrow(reservationId, memberId));
     }
 
     private static void validateReservationUpdated(int affectedRow) {
@@ -80,14 +80,14 @@ public class ReservationService {
         }
     }
 
-    private Reservation getNewReservationOrThrow(long reservationId, String name) {
-        return reservationRepository.findByIdAndName(reservationId, name)
-                .orElseThrow(() -> new EscapeRoomException(ErrorCode.RESERVATION_NOT_FOUND_AFTER_UPDATE, name, reservationId));
+    private Reservation getNewReservationOrThrow(long reservationId, long memberId) {
+        return reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new EscapeRoomException(ErrorCode.RESERVATION_NOT_FOUND_AFTER_UPDATE, memberId, reservationId));
     }
 
-    private ReservationDetailProjection getOldReservationDetailOrThrow(long reservationId, String name) {
-        return reservationRepository.findDetailByIdAndName(reservationId, name)
-                .orElseThrow(() -> new EscapeRoomException(ErrorCode.RESERVATION_NOT_FOUND, name, reservationId));
+    private ReservationDetailProjection getOldReservationDetailOrThrow(long reservationId, long memberId) {
+        return reservationRepository.findDetailByIdAndMemberId(reservationId, memberId)
+                .orElseThrow(() -> new EscapeRoomException(ErrorCode.RESERVATION_NOT_FOUND, memberId, reservationId));
     }
 
     private void validateDuplicatedReservationNot(long reservationId, long scheduleId) {

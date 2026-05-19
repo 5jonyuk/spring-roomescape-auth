@@ -1,11 +1,16 @@
 package roomescape.reservation.repository.projection;
 
+import roomescape.member.Role;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public record ReservationDetailProjection(
         Long id,
-        String name,
+        Long memberId,
+        String memberName,
+        String memberPassword,
+        Role memberRole,
         LocalDate date,
         Long themeId,
         String themeName,

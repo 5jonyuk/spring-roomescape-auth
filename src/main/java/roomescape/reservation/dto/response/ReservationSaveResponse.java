@@ -4,13 +4,13 @@ import roomescape.reservation.Reservation;
 
 public record ReservationSaveResponse(
         Long id,
-        String name,
+        Long memberId,
         Long scheduleId
 ) {
     public static ReservationSaveResponse from(Reservation reservation) {
         return new ReservationSaveResponse(
                 reservation.getId(),
-                reservation.getName(),
+                reservation.getMemberId(),
                 reservation.getScheduleId()
         );
     }

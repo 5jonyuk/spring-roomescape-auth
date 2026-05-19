@@ -9,7 +9,7 @@ import java.util.List;
 
 public record ReservationDetailFindResponse(
         Long id,
-        String name,
+        String memberName,
         LocalDate date,
         ThemeFindResponse theme,
         TimeInformation time
@@ -23,7 +23,7 @@ public record ReservationDetailFindResponse(
     public static ReservationDetailFindResponse from(ReservationDetailProjection projection) {
         return new ReservationDetailFindResponse(
                 projection.id(),
-                projection.name(),
+                projection.memberName(),
                 projection.date(),
                 new ThemeFindResponse(
                         projection.themeId(),
