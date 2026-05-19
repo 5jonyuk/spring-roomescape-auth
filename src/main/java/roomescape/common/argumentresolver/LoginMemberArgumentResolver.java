@@ -8,6 +8,8 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import roomescape.exception.ErrorCode;
+import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
 import roomescape.member.LoginMember;
 
@@ -29,14 +31,18 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
     ) throws Exception {
         HttpServletRequest servletRequest = webRequest.getNativeRequest(HttpServletRequest.class);
         if (servletRequest == null) {
-            throw new IllegalStateException("HttpServletRequest이 존재하지 않습니다.");
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
 
         HttpSession session = servletRequest.getSession(false);
         if (session == null) {
-            throw new IllegalStateException("세션이 존재하지 않습니다.");
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return (AuthenticatedMember) session.getAttribute("loginMember");
+        AuthenticatedMember member = (AuthenticatedMember) session.getAttribute("loginMember");
+        if (member == null) {
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
+        }
+        return member;
     }
 }

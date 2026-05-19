@@ -36,6 +36,11 @@ public enum ErrorCode {
     // 요청 값
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "INVALID_INPUT_400", "요청 값이 올바르지 않습니다."),
 
+    // 인증/인가
+    LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "LOGIN_401", "아이디 또는 비밀번호가 올바르지 않습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED_401", "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN_403", "접근 권한이 없습니다."),
+
     // 서버 에러
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR_500", "서버 내부 오류가 발생하였습니다. 관리자에게 문의해주세요.");
 

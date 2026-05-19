@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import roomescape.exception.ErrorCode;
+import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
 
 @Component
@@ -21,19 +23,16 @@ public class AdminInterceptor implements HandlerInterceptor {
 
         HttpSession session = request.getSession(false);
         if (session == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
 
         AuthenticatedMember member = (AuthenticatedMember) session.getAttribute("loginMember");
         if (member == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
 
         if (!member.isAdmin()) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return false;
+            throw new EscapeRoomException(ErrorCode.FORBIDDEN);
         }
         return true;
     }

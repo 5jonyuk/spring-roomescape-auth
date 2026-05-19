@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import roomescape.exception.ErrorCode;
+import roomescape.exception.EscapeRoomException;
 
 @Component
 public class AuthenticationInterceptor implements HandlerInterceptor {
@@ -22,8 +24,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("loginMember") == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+            throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
         return true;
     }

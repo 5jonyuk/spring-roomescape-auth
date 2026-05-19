@@ -2,6 +2,8 @@ package roomescape.login;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import roomescape.exception.ErrorCode;
+import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
 import roomescape.member.Member;
 import roomescape.member.repository.MemberRepository;
@@ -14,10 +16,10 @@ public class LoginService {
 
     public AuthenticatedMember login(String name, String password) {
         Member member = memberRepository.findByName(name)
-                .orElseThrow(() -> new IllegalStateException(""));
+                .orElseThrow(() -> new EscapeRoomException(ErrorCode.LOGIN_FAILED));
 
         if (!member.isSamePassword(password)) {
-            throw new IllegalStateException("Wrong password");
+            throw new EscapeRoomException(ErrorCode.LOGIN_FAILED);
         }
 
         return AuthenticatedMember.of(member.getId(), member.getRole(), member.getName());
