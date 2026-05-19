@@ -15,8 +15,21 @@ public class AdminInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler
     ) throws Exception {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+
         AuthenticatedMember member = (AuthenticatedMember) session.getAttribute("loginMember");
+        if (member == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
 
         if (!member.isAdmin()) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -25,4 +38,3 @@ public class AdminInterceptor implements HandlerInterceptor {
         return true;
     }
 }
-

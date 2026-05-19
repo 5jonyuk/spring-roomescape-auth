@@ -15,6 +15,10 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler
     ) throws Exception {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("loginMember") == null) {
