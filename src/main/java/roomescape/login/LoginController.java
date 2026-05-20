@@ -1,7 +1,5 @@
 package roomescape.login;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,8 +8,10 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import roomescape.auth.JwtTokenProvider;
 import roomescape.common.api.ApiResponse;
 import roomescape.login.request.LoginRequest;
+import roomescape.login.response.LoginResponse;
 import roomescape.member.AuthenticatedMember;
 
 @RestController
@@ -19,26 +19,18 @@ import roomescape.member.AuthenticatedMember;
 public class LoginController {
 
     private final LoginService loginService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Void>> login(
-            @RequestBody @Valid LoginRequest body,
-            HttpServletRequest request
-    ) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest body) {
         AuthenticatedMember member = loginService.login(body.name(), body.password());
-
-        HttpSession session = request.getSession();
-        session.setAttribute("loginMember", member);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+        String accessToken = jwtTokenProvider.generateAccessToken(member);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(LoginResponse.bearer(accessToken)));
     }
 
     @DeleteMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
+    public ResponseEntity<ApiResponse<Void>> logout() {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

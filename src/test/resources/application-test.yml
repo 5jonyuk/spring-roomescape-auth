@@ -9,3 +9,8 @@ spring:
       mode: always
       schema-locations: classpath:schema.sql
       data-locations: classpath:test-data.sql
+
+auth:
+  jwt:
+    secret: test-roomescape-test-roomescape-test-roomescape
+    access-token-expiration-seconds: 3600

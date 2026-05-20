@@ -8,7 +8,7 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import roomescape.auth.SessionLoginMemberProvider;
+import roomescape.auth.TokenLoginMemberProvider;
 import roomescape.exception.ErrorCode;
 import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
@@ -18,7 +18,7 @@ import roomescape.member.LoginMember;
 @RequiredArgsConstructor
 public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final SessionLoginMemberProvider sessionLoginMemberProvider;
+    private final TokenLoginMemberProvider tokenLoginMemberProvider;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -39,6 +39,6 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
             throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }
 
-        return sessionLoginMemberProvider.getAuthenticatedMember(servletRequest);
+        return tokenLoginMemberProvider.getRequiredAuthenticatedMemberFromRequestAttribute(servletRequest);
     }
 }

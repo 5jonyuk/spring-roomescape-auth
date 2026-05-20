@@ -1,7 +1,6 @@
 package roomescape.reservation;
 
 import io.restassured.RestAssured;
-import io.restassured.filter.session.SessionFilter;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,21 +20,19 @@ import static org.hamcrest.Matchers.is;
 @Sql(scripts = {"/truncate.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class ReservationControllerTest {
 
-    private SessionFilter login() {
-        SessionFilter sessionFilter = new SessionFilter();
+    private String login() {
         Map<String, Object> loginRequest = new HashMap<>();
         loginRequest.put("name", "a");
         loginRequest.put("password", "test1");
 
-        RestAssured.given().log().all()
-                .filter(sessionFilter)
+        return RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginRequest)
                 .when().post("/login")
                 .then().log().all()
-                .statusCode(200);
-
-        return sessionFilter;
+                .statusCode(200)
+                .extract()
+                .path("data.accessToken");
     }
 
     private Map<String, Object> reservationRequest() {
@@ -49,10 +46,10 @@ public class ReservationControllerTest {
 
     @Test
     void 예약_생성() {
-        SessionFilter sessionFilter = login();
+        String accessToken = login();
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(reservationRequest())
                 .when().post("/reservations")
@@ -66,10 +63,10 @@ public class ReservationControllerTest {
 
     @Test
     void 예약_조회() {
-        SessionFilter sessionFilter = login();
+        String accessToken = login();
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)
@@ -79,10 +76,10 @@ public class ReservationControllerTest {
 
     @Test
     void 예약_추가_및_삭제() {
-        SessionFilter sessionFilter = login();
+        String accessToken = login();
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(reservationRequest())
                 .when().post("/reservations")
@@ -92,7 +89,7 @@ public class ReservationControllerTest {
                 .body("data.id", is(5));
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)
@@ -100,13 +97,13 @@ public class ReservationControllerTest {
                 .body("data.size()", is(5));
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().delete("/reservations/1")
                 .then().log().all()
                 .statusCode(204);
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)
@@ -116,10 +113,10 @@ public class ReservationControllerTest {
 
     @Test
     void 나의_특정_예약_삭제_및_나의_예약_목록_조회() {
-        SessionFilter sessionFilter = login();
+        String accessToken = login();
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations/me")
                 .then().log().all()
                 .statusCode(200)
@@ -127,14 +124,14 @@ public class ReservationControllerTest {
                 .body("data.size()", is(4));
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .pathParam("id", 1)
                 .when().delete("/reservations/{id}")
                 .then().log().all()
                 .statusCode(204);
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations/me")
                 .then().log().all()
                 .statusCode(200)

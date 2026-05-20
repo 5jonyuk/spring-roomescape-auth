@@ -5,13 +5,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import roomescape.auth.SessionLoginMemberProvider;
+import roomescape.auth.TokenLoginMemberProvider;
 
 @Component
 @RequiredArgsConstructor
 public class AuthenticationInterceptor implements HandlerInterceptor {
 
-    private final SessionLoginMemberProvider sessionLoginMemberProvider;
+    private final TokenLoginMemberProvider tokenLoginMemberProvider;
 
     @Override
     public boolean preHandle(
@@ -23,7 +23,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        sessionLoginMemberProvider.getAuthenticatedMember(request);
+        tokenLoginMemberProvider.resolveAndCacheAuthenticatedMember(request);
         return true;
     }
 }

@@ -1,7 +1,6 @@
 package roomescape;
 
 import io.restassured.RestAssured;
-import io.restassured.filter.session.SessionFilter;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,21 +28,19 @@ public class H2DatabaseTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private SessionFilter login() {
-        SessionFilter sessionFilter = new SessionFilter();
+    private String login() {
         Map<String, Object> loginRequest = new HashMap<>();
         loginRequest.put("name", "testAdmin");
         loginRequest.put("password", "test2");
 
-        RestAssured.given().log().all()
-                .filter(sessionFilter)
+        return RestAssured.given().log().all()
                 .body(loginRequest)
                 .contentType(ContentType.JSON)
                 .post("/login")
                 .then().log().all()
-                .statusCode(200);
-
-        return sessionFilter;
+                .statusCode(200)
+                .extract()
+                .path("data.accessToken");
     }
 
     @Test
@@ -59,10 +56,10 @@ public class H2DatabaseTest {
 
     @Test
     void DB_조회_API_전환() {
-        SessionFilter sessionFilter = login();
+        String accessToken = login();
 
         List<Reservation> reservations = RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200).extract()

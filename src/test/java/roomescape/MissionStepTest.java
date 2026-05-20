@@ -1,9 +1,7 @@
 package roomescape;
 
 import io.restassured.RestAssured;
-import io.restassured.filter.session.SessionFilter;
 import io.restassured.http.ContentType;
-import jakarta.websocket.Session;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -21,19 +19,18 @@ import static org.hamcrest.Matchers.is;
 @Import(TestTimeConfig.class)
 public class MissionStepTest {
 
-    SessionFilter sessionFilter = new SessionFilter();
-
     @Test
     void 예약_조회() {
-        RestAssured.given()
-                .filter(sessionFilter)
+        String accessToken = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of("name", "a", "password", "test1"))
                 .when().post("/login")
-                .then().statusCode(200);
+                .then().statusCode(200)
+                .extract()
+                .path("data.accessToken");
 
         RestAssured.given().log().all()
-                .filter(sessionFilter)
+                .header("Authorization", "Bearer " + accessToken)
                 .when().get("/reservations")
                 .then().log().all()
                 .statusCode(200)

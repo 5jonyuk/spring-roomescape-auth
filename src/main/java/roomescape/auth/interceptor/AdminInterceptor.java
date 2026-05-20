@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import roomescape.auth.SessionLoginMemberProvider;
+import roomescape.auth.TokenLoginMemberProvider;
 import roomescape.exception.ErrorCode;
 import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
@@ -14,7 +14,7 @@ import roomescape.member.AuthenticatedMember;
 @RequiredArgsConstructor
 public class AdminInterceptor implements HandlerInterceptor {
 
-    private final SessionLoginMemberProvider sessionLoginMemberProvider;
+    private final TokenLoginMemberProvider tokenLoginMemberProvider;
 
     @Override
     public boolean preHandle(
@@ -26,7 +26,7 @@ public class AdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        AuthenticatedMember member = sessionLoginMemberProvider.getAuthenticatedMember(request);
+        AuthenticatedMember member = tokenLoginMemberProvider.resolveAndCacheAuthenticatedMember(request);
 
         if (!member.isAdmin()) {
             throw new EscapeRoomException(ErrorCode.FORBIDDEN);
