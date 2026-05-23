@@ -1,4 +1,4 @@
-package roomescape.schedule;
+package roomescape.schedule.controller.manager;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.common.api.ApiResponse;
+import roomescape.schedule.ScheduleService;
 import roomescape.schedule.dto.request.ScheduleSaveRequest;
 import roomescape.schedule.dto.response.ScheduleFindResponse;
 import roomescape.schedule.dto.response.ScheduleSaveResponse;
@@ -19,9 +20,9 @@ import roomescape.schedule.dto.response.ScheduleSaveResponse;
 import java.util.List;
 
 @RestController
-@RequestMapping("/schedules")
+@RequestMapping("/api/manager/schedules")
 @RequiredArgsConstructor
-public class ScheduleController {
+public class ManagerScheduleController {
     private final ScheduleService scheduleService;
 
     @GetMapping

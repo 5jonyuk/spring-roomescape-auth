@@ -42,11 +42,12 @@ public class ThemeControllerTest {
         Map<String, Object> loginRequest = new HashMap<>();
         loginRequest.put("name", "testAdmin");
         loginRequest.put("password", "test2");
+        loginRequest.put("storeId", 1L);
 
         return RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginRequest)
-                .when().post("/login")
+                .when().post("/api/login")
                 .then().log().all()
                 .statusCode(200)
                 .extract()
@@ -65,7 +66,7 @@ public class ThemeControllerTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/themes")
+                .when().post("/api/manager/themes")
                 .then().log().all()
                 .statusCode(201);
     }
@@ -82,13 +83,13 @@ public class ThemeControllerTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/themes")
+                .when().post("/api/manager/themes")
                 .then().log().all()
                 .statusCode(201);
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().delete("/themes/5")
+                .when().delete("/api/manager/themes/5")
                 .then().log().all()
                 .statusCode(204);
     }
@@ -100,7 +101,7 @@ public class ThemeControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .queryParam("date", "2026-05-05")
-                .when().get("/themes")
+                .when().get("/api/manager/themes")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -121,7 +122,7 @@ public class ThemeControllerTest {
         );
 
         RestAssured.given().log().all()
-                .when().get("/themes/popular")
+                .when().get("/api/themes/popular")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -137,7 +138,7 @@ public class ThemeControllerTest {
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/themes")
+                .when().get("/api/manager/themes")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))

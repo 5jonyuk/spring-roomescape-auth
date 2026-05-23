@@ -12,7 +12,7 @@ import roomescape.member.AuthenticatedMember;
 
 @Component
 @RequiredArgsConstructor
-public class AdminInterceptor implements HandlerInterceptor {
+public class ManagerInterceptor implements HandlerInterceptor {
 
     private final TokenLoginMemberProvider tokenLoginMemberProvider;
 
@@ -28,7 +28,7 @@ public class AdminInterceptor implements HandlerInterceptor {
 
         AuthenticatedMember member = tokenLoginMemberProvider.resolveAndCacheAuthenticatedMember(request);
 
-        if (!member.isAdmin()) {
+        if (!member.isManager()) {
             throw new EscapeRoomException(ErrorCode.FORBIDDEN);
         }
         return true;

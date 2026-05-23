@@ -5,11 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import roomescape.exception.ErrorCode;
@@ -17,11 +12,16 @@ import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
 import roomescape.member.Role;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+
 @Component
 public class JwtTokenProvider {
 
     private static final String CLAIM_ROLE = "role";
-    private static final String CLAIM_NAME = "name";
 
     private final String secret;
     private final Duration accessTokenExpiration;
@@ -48,7 +48,6 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(String.valueOf(member.id()))
                 .claim(CLAIM_ROLE, member.role().name())
-                .claim(CLAIM_NAME, member.name())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiration))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -66,8 +65,8 @@ public class JwtTokenProvider {
 
             long memberId = Long.parseLong(claims.getSubject());
             Role role = Role.valueOf(claims.get(CLAIM_ROLE, String.class));
-            String name = claims.get(CLAIM_NAME, String.class);
-            return AuthenticatedMember.of(memberId, role, name);
+
+            return AuthenticatedMember.of(memberId, role);
         } catch (RuntimeException e) {
             throw new EscapeRoomException(ErrorCode.UNAUTHORIZED);
         }

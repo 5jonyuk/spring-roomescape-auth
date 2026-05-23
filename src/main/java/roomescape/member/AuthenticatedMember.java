@@ -2,14 +2,13 @@ package roomescape.member;
 
 public record AuthenticatedMember(
         Long id,
-        Role role,
-        String name
+        Role role
 ) {
-    public static AuthenticatedMember of(long id, Role role, String name) {
-        return new AuthenticatedMember(id, role, name);
+    public static AuthenticatedMember of(long id, Role role) {
+        return new AuthenticatedMember(id, role);
     }
 
-    public boolean isAdmin() {
-        return role == Role.ADMIN;
+    public boolean isManager() {
+        return role == Role.MANAGER;
     }
 }

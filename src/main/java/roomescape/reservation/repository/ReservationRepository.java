@@ -11,19 +11,19 @@ import java.util.Set;
 public interface ReservationRepository {
     Reservation save(Reservation reservation);
 
-    List<ReservationDetailProjection> findAllDetails();
+    List<ReservationDetailProjection> findAllDetailsByStoreId(long storeId);
 
     Set<Long> findTimeIdByDateAndThemeId(LocalDate date, long themeId);
 
     List<ReservationDetailProjection> findAllReservationDetailsByMemberId(long memberId);
 
-    void deleteByIdAndMemberId(long reservationId, long memberId);
+    void deleteById(long reservationId);
 
-    Optional<ReservationDetailProjection> findDetailByIdAndMemberId(long reservationId, long memberId);
+    Optional<ReservationDetailProjection> findDetailById(long reservationId);
 
     boolean existsByScheduleIdAndIdNot(long scheduleId, long reservationId);
 
-    int updateScheduleByIdAndMemberId(long reservationId, long memberId, long scheduleId);
+    int updateScheduleById(long reservationId, long scheduleId);
 
     Optional<Reservation> findById(long reservationId);
 

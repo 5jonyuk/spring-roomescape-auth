@@ -1,4 +1,4 @@
-package roomescape.reservation;
+package roomescape.reservation.controller.manager;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -10,14 +10,13 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.common.api.ApiResponse;
 import roomescape.member.AuthenticatedMember;
 import roomescape.member.LoginMember;
-import roomescape.reservation.dto.request.ReservationSaveRequest;
+import roomescape.reservation.ReservationService;
 import roomescape.reservation.dto.request.ReservationUpdateRequest;
 import roomescape.reservation.dto.response.ReservationDetailFindResponse;
 import roomescape.reservation.dto.response.ReservationSaveResponse;
@@ -25,52 +24,40 @@ import roomescape.reservation.dto.response.ReservationSaveResponse;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reservations")
+@RequestMapping("/api/manager")
 @RequiredArgsConstructor
 @Validated
-public class ReservationController {
+public class ManagerReservationController {
 
     private final ReservationService reservationService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ReservationSaveResponse>> save(
-            @RequestBody @Valid ReservationSaveRequest body,
+    @GetMapping("/stores/{storeId}/reservations")
+    public ResponseEntity<ApiResponse<List<ReservationDetailFindResponse>>> findStoreReservationDetails(
+            @PathVariable @Positive long storeId,
             @LoginMember AuthenticatedMember member
     ) {
-        ReservationSaveResponse response = reservationService.save(body, member.id());
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
-    }
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<ReservationDetailFindResponse>>> findAllDetails() {
-        List<ReservationDetailFindResponse> responses = reservationService.findAllDetails();
+        List<ReservationDetailFindResponse> responses = reservationService.findStoreReservationDetails(member.id(), storeId);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteByIdAndMemberId(
-            @PathVariable @Positive long id,
+    @DeleteMapping("/stores/{storeId}/reservations/{reservationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteByManager(
+            @PathVariable @Positive long reservationId,
+            @PathVariable @Positive long storeId,
             @LoginMember AuthenticatedMember member
     ) {
-        reservationService.deleteByIdAndMemberId(id, member.id());
+        reservationService.deleteById(reservationId, member.id(), storeId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.success(null));
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/stores/{storeId}/reservations/{reservationId}")
     public ResponseEntity<ApiResponse<ReservationSaveResponse>> update(
             @RequestBody @Valid ReservationUpdateRequest request,
-            @PathVariable @Positive long id,
+            @PathVariable @Positive long reservationId,
+            @PathVariable @Positive long storeId,
             @LoginMember AuthenticatedMember member
     ) {
-        ReservationSaveResponse response = reservationService.update(request, id, member.id());
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<List<ReservationDetailFindResponse>>> findMyReservations(
-            @LoginMember AuthenticatedMember member
-    ) {
-        List<ReservationDetailFindResponse> response = reservationService.findMyReservations(member.id());
+        ReservationSaveResponse response = reservationService.update(request, reservationId, member.id(), storeId);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 }

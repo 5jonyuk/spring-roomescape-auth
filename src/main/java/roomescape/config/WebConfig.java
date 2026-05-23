@@ -6,7 +6,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import roomescape.auth.interceptor.AdminInterceptor;
+import roomescape.auth.interceptor.ManagerInterceptor;
 import roomescape.auth.interceptor.AuthenticationInterceptor;
 import roomescape.auth.argumentresolver.LoginMemberArgumentResolver;
 
@@ -18,7 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final LoginMemberArgumentResolver loginMemberArgumentResolver;
     private final AuthenticationInterceptor authenticationInterceptor;
-    private final AdminInterceptor adminInterceptor;
+    private final ManagerInterceptor managerInterceptor;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -40,19 +40,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authenticationInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns("/login", "/logout", "/themes/popular");
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/login", "/api/logout", "/api/themes/popular");
 
-        registry.addInterceptor(adminInterceptor)
+        registry.addInterceptor(managerInterceptor)
                 .addPathPatterns(
-                        "/times/**",
-                        "/themes/**",
-                        "/schedules/**"
-                )
-                .excludePathPatterns(
-                        "/themes",
-                        "/themes/popular",
-                        "/times/availability"
+                        "/api/manager/**"
                 );
     }
 }

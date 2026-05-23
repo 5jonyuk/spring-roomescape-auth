@@ -25,11 +25,28 @@ public class ReservationTimeControllerTest {
         Map<String, Object> loginRequest = new HashMap<>();
         loginRequest.put("name", "testAdmin");
         loginRequest.put("password", "test2");
+        loginRequest.put("storeId", 1L);
 
         return RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginRequest)
-                .when().post("/login")
+                .when().post("/api/login")
+                .then().log().all()
+                .statusCode(200)
+                .extract()
+                .path("data.accessToken");
+    }
+
+    private String loginUser() {
+        Map<String, Object> loginRequest = new HashMap<>();
+        loginRequest.put("name", "a");
+        loginRequest.put("password", "test1");
+        loginRequest.put("storeId", 1L);
+
+        return RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(loginRequest)
+                .when().post("/api/login")
                 .then().log().all()
                 .statusCode(200)
                 .extract()
@@ -47,13 +64,13 @@ public class ReservationTimeControllerTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(params)
-                .when().post("/times")
+                .when().post("/api/manager/times")
                 .then().log().all()
                 .statusCode(201);
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/times")
+                .when().get("/api/manager/times")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -61,7 +78,7 @@ public class ReservationTimeControllerTest {
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().delete("/times/5")
+                .when().delete("/api/manager/times/5")
                 .then().log().all()
                 .statusCode(204);
     }
@@ -77,7 +94,7 @@ public class ReservationTimeControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .params(options)
-                .when().get("/times/availability")
+                .when().get("/api/user/times/availability")
                 .then().log().all()
                 .body("success", is(true))
                 .body("data.size()", is(1))
@@ -89,6 +106,7 @@ public class ReservationTimeControllerTest {
     @DisplayName("예약 가능 시간 조회 및 예약 생성 이후 예약 가능 시간을 재조회를 할 수 있다.")
     void 정상_흐름_테스트() {
         String accessToken = login();
+        String userToken = loginUser();
 
         Map<String, Object> options = new HashMap<>();
         options.put("date", "2026-05-05");
@@ -98,7 +116,7 @@ public class ReservationTimeControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .params(options)
-                .when().get("/times/availability")
+                .when().get("/api/user/times/availability")
                 .then().log().all()
                 .body("success", is(true))
                 .body("data.size()", is(1))
@@ -111,12 +129,13 @@ public class ReservationTimeControllerTest {
         reservation.put("date", "2026-05-05");
         reservation.put("timeId", 4);
         reservation.put("themeId", 4);
+        reservation.put("storeId", 1L);
 
         RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + accessToken)
+                .header("Authorization", "Bearer " + userToken)
                 .contentType(ContentType.JSON)
                 .body(reservation)
-                .when().post("/reservations")
+                .when().post("/api/user/reservations")
                 .then().log().all()
                 .statusCode(201);
 
@@ -128,7 +147,7 @@ public class ReservationTimeControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .params(options1)
-                .when().get("/times/availability")
+                .when().get("/api/user/times/availability")
                 .then().log().all()
                 .body("success", is(true))
                 .body("data.size()", is(1))

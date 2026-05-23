@@ -14,15 +14,25 @@ CREATE TABLE theme
     PRIMARY KEY (id)
 );
 
+CREATE TABLE store
+(
+    id   BIGINT      NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    spot VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE schedule
 (
     id       BIGINT NOT NULL AUTO_INCREMENT,
     date     DATE   NOT NULL,
-    time_id  BIGINT,
-    theme_id BIGINT,
+    time_id  BIGINT NOT NULL,
+    theme_id BIGINT NOT NULL,
+    store_id BIGINT NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
-    FOREIGN KEY (theme_id) REFERENCES theme (id),
-    FOREIGN KEY (time_id) REFERENCES reservation_time (id)
+    FOREIGN KEY (theme_id) REFERENCES theme (id) ON DELETE RESTRICT ,
+    FOREIGN KEY (time_id) REFERENCES reservation_time (id) ON DELETE RESTRICT ,
+    FOREIGN KEY (store_id) REFERENCES store (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE member
@@ -32,6 +42,16 @@ CREATE TABLE member
     password VARCHAR(255) NOT NULL,
     role     VARCHAR(50)  NOT NULL,
     PRIMARY KEY (id)
+);
+
+CREATE TABLE manager
+(
+    id        BIGINT NOT NULL AUTO_INCREMENT,
+    member_id BIGINT NOT NULL,
+    store_id  BIGINT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE RESTRICT ,
+    FOREIGN KEY (store_id) REFERENCES store (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE reservation

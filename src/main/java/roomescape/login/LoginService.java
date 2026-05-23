@@ -22,6 +22,6 @@ public class LoginService {
             throw new EscapeRoomException(ErrorCode.LOGIN_FAILED);
         }
 
-        return AuthenticatedMember.of(member.getId(), member.getRole(), member.getName());
+        return AuthenticatedMember.of(member.getId(), member.getRole());
     }
 }

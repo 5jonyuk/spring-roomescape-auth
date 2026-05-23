@@ -1,8 +1,7 @@
-package roomescape.reservationtime;
+package roomescape.reservationtime.controller.manager;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,21 +10,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.common.api.ApiResponse;
+import roomescape.reservationtime.ReservationTimeService;
 import roomescape.reservationtime.dto.request.ReservationTimeSaveRequest;
-import roomescape.reservationtime.dto.response.AvailableTimeFindResponse;
 import roomescape.reservationtime.dto.response.ReservationTimeFindResponse;
 import roomescape.reservationtime.dto.response.ReservationTimeSaveResponse;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/times")
+@RequestMapping("/api/manager/times")
 @RequiredArgsConstructor
-public class ReservationTimeController {
+public class ManagerReservationTimeController {
     private final ReservationTimeService reservationTimeService;
 
     @PostMapping
@@ -46,14 +43,5 @@ public class ReservationTimeController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         reservationTimeService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.success(null));
-    }
-
-    @GetMapping("/availability")
-    public ResponseEntity<ApiResponse<List<AvailableTimeFindResponse>>> findTimesByDateAndThemeId(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam long themeId
-    ) {
-        List<AvailableTimeFindResponse> responses = reservationTimeService.findTimesByDateAndThemeId(date, themeId);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
     }
 }

@@ -1,4 +1,4 @@
-package roomescape.theme;
+package roomescape.theme.controller.manager;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.common.api.ApiResponse;
+import roomescape.theme.ThemeService;
 import roomescape.theme.dto.request.ThemeSaveRequest;
 import roomescape.theme.dto.response.ThemeFindResponse;
 import roomescape.theme.dto.response.ThemeSaveResponse;
@@ -21,15 +22,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/themes")
+@RequestMapping("/api/manager/themes")
 @RequiredArgsConstructor
-public class ThemeController {
+public class ManagerThemeController {
     private final ThemeService themeService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<ThemeSaveResponse>> save(@RequestBody ThemeSaveRequest body) {
         ThemeSaveResponse response = themeService.save(body);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -42,7 +42,6 @@ public class ThemeController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ThemeFindResponse>>> findAll() {
         List<ThemeFindResponse> responses = themeService.findAll();
-
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
     }
 
@@ -51,14 +50,6 @@ public class ThemeController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         List<ThemeFindResponse> responses = themeService.findScheduledThemesByDate(date);
-
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
-    }
-
-    @GetMapping("/popular")
-    public ResponseEntity<ApiResponse<List<ThemeFindResponse>>> findByDayAndLimit() {
-        List<ThemeFindResponse> responses = themeService.findPopularTheme();
-
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
     }
 }

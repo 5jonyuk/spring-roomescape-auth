@@ -25,11 +25,12 @@ public class ScheduleControllerTest {
         Map<String, Object> loginRequest = new HashMap<>();
         loginRequest.put("name", "testAdmin");
         loginRequest.put("password", "test2");
+        loginRequest.put("storeId", 1L);
 
         return RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginRequest)
-                .when().post("/login")
+                .when().post("/api/login")
                 .then().log().all()
                 .statusCode(200)
                 .extract()
@@ -48,7 +49,7 @@ public class ScheduleControllerTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(schedule)
-                .when().post("/schedules")
+                .when().post("/api/manager/schedules")
                 .then().log().all()
                 .statusCode(201)
                 .body("success", is(true))
@@ -64,7 +65,7 @@ public class ScheduleControllerTest {
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/schedules/1")
+                .when().get("/api/manager/schedules/1")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -86,7 +87,7 @@ public class ScheduleControllerTest {
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(schedule)
-                .when().post("/schedules")
+                .when().post("/api/manager/schedules")
                 .then().log().all()
                 .statusCode(201)
                 .body("success", is(true))
@@ -94,7 +95,7 @@ public class ScheduleControllerTest {
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().delete("/schedules/6")
+                .when().delete("/api/manager/schedules/6")
                 .then().log().all()
                 .statusCode(204);
     }

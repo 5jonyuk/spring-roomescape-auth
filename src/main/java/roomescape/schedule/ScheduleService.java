@@ -10,6 +10,7 @@ import roomescape.schedule.dto.request.ScheduleSaveRequest;
 import roomescape.schedule.dto.response.ScheduleFindResponse;
 import roomescape.schedule.dto.response.ScheduleSaveResponse;
 import roomescape.schedule.repository.ScheduleRepository;
+import roomescape.store.repository.StoreRepository;
 import roomescape.theme.repository.ThemeRepository;
 
 import java.time.Clock;
@@ -23,10 +24,11 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ReservationTimeRepository reservationTimeRepository;
     private final ThemeRepository themeRepository;
+    private final StoreRepository storeRepository;
     private final Clock clock;
 
-    public long findScheduleIdByDateAndTimeIdAndThemeId(LocalDate date, long timeId, long themeId) {
-        return getScheduleIdOrThrow(date, timeId, themeId);
+    public long findScheduleIdByDateAndTimeIdAndThemeIdAndStoreId(LocalDate date, long timeId, long themeId, long storeId) {
+        return getScheduleIdOrThrow(date, timeId, themeId, storeId);
     }
 
     public List<ScheduleFindResponse> findAll() {
@@ -60,11 +62,18 @@ public class ScheduleService {
         }
     }
 
-    public void validateSchedule(LocalDate date, Long timeId, Long themeId) {
+    public void validateSchedule(LocalDate date, Long timeId, Long themeId,  Long storeId) {
         validateNotPastDate(date);
         ReservationTime reservationTime = getReservationTimeOrThrow(timeId);
         validateNotPastTime(date, reservationTime.startAt());
         getThemeOrThrow(themeId);
+        validateStoreId(storeId);
+    }
+
+    private void validateStoreId(long storeId) {
+        if (!storeRepository.existsStoreById(storeId)){
+            throw new EscapeRoomException(ErrorCode.INVALID_INPUT);
+        }
     }
 
     public void validateNotPastDate(LocalDate date) {
@@ -98,8 +107,8 @@ public class ScheduleService {
                 .orElseThrow(() -> new EscapeRoomException(ErrorCode.RESERVATIONTIME_NOT_FOUND, timeId));
     }
 
-    private long getScheduleIdOrThrow(LocalDate date, long timeId, long themeId) {
-        return scheduleRepository.findScheduleIdByDateAndTimeIdAndThemeId(date, timeId, themeId)
+    private long getScheduleIdOrThrow(LocalDate date, long timeId, long themeId, long storeId) {
+        return scheduleRepository.findScheduleIdByDateAndTimeIdAndThemeId(date, timeId, themeId, storeId)
                 .orElseThrow(() -> new EscapeRoomException(ErrorCode.SCHEDULE_NOT_FOUND_WITH_CONDITION, date, timeId, themeId));
     }
 

@@ -24,6 +24,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 class JdbcReservationRepositoryTest {
 
     private static final long MEMBER_ID = 1L;
+    private static final long STORE_ID = 1L;
 
     @Autowired
     private JdbcReservationRepository reservationRepository;
@@ -47,7 +48,7 @@ class JdbcReservationRepositoryTest {
         Reservation reservation = new Reservation(null, MEMBER_ID, 4L);
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        List<ReservationDetailProjection> reservations = reservationRepository.findAllDetails();
+        List<ReservationDetailProjection> reservations = reservationRepository.findAllDetailsByStoreId(STORE_ID);
 
         assertThat(reservations).hasSize(5);
         assertThat(reservations).extracting(ReservationDetailProjection::id)
@@ -61,7 +62,7 @@ class JdbcReservationRepositoryTest {
 
         reservationRepository.deleteByIdAndMemberId(savedReservation.getId(), MEMBER_ID);
 
-        List<ReservationDetailProjection> reservations = reservationRepository.findAllDetails();
+        List<ReservationDetailProjection> reservations = reservationRepository.findAllDetailsByStoreId(STORE_ID);
         assertThat(reservations).hasSize(4);
         assertThat(reservations).extracting(ReservationDetailProjection::id)
                 .doesNotContain(savedReservation.getId());
@@ -90,7 +91,7 @@ class JdbcReservationRepositoryTest {
     void deleteByIdAndMemberId_테스트() {
         reservationRepository.deleteByIdAndMemberId(1L, MEMBER_ID);
 
-        assertThat(reservationRepository.findAllDetails())
+        assertThat(reservationRepository.findAllDetailsByStoreId(STORE_ID))
                 .extracting(ReservationDetailProjection::id)
                 .doesNotContain(1L);
     }
@@ -100,7 +101,7 @@ class JdbcReservationRepositoryTest {
     void deleteByIdAndMemberId_회원불일치_테스트() {
         reservationRepository.deleteByIdAndMemberId(1L, 999L);
 
-        assertThat(reservationRepository.findAllDetails())
+        assertThat(reservationRepository.findAllDetailsByStoreId(STORE_ID))
                 .extracting(ReservationDetailProjection::id)
                 .contains(1L);
     }
@@ -124,7 +125,7 @@ class JdbcReservationRepositoryTest {
     @Test
     @DisplayName("회원 본인의 기존 예약을 변경 가능한 스케줄로 변경할 수 있다.")
     void updateScheduleByIdAndMemberId_테스트() {
-        int affectedRow = reservationRepository.updateScheduleByIdAndMemberId(1L, MEMBER_ID, 4L);
+        int affectedRow = reservationRepository.updateScheduleById(1L, 4L);
 
         assertThat(affectedRow).isEqualTo(1);
         assertThat(reservationRepository.findById(1L))

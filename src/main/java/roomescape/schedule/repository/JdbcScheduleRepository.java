@@ -53,15 +53,16 @@ public class JdbcScheduleRepository implements ScheduleRepository {
     }
 
     @Override
-    public Optional<Long> findScheduleIdByDateAndTimeIdAndThemeId(LocalDate date, long timeId, long themeId) {
+    public Optional<Long> findScheduleIdByDateAndTimeIdAndThemeId(LocalDate date, long timeId, long themeId, long storeId) {
         String sql = "SELECT s.id " +
                 "FROM schedule s " +
-                "WHERE s.date = :date AND s.time_id = :timeId AND s.theme_id = :themeId";
+                "WHERE s.date = :date AND s.time_id = :timeId AND s.theme_id = :themeId AND s.store_id = :storeId";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("date", date)
                 .addValue("timeId", timeId)
-                .addValue("themeId", themeId);
+                .addValue("themeId", themeId)
+                .addValue("storeId", storeId);
 
         return template.query(sql, params, (resultSet, rowNum) -> resultSet.getLong("id"))
                 .stream()

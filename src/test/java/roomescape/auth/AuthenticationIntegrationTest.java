@@ -13,7 +13,7 @@ public class AuthenticationIntegrationTest extends AuthApiTestSupport {
         RestAssured.given().log().all()
                 .header("Authorization", bearer(loginUserToken()))
                 .contentType(ContentType.JSON)
-                .when().get("/reservations/me")
+                .when().get("/api/user/reservations/me")
                 .then().log().all()
                 .statusCode(200);
     }
@@ -23,7 +23,7 @@ public class AuthenticationIntegrationTest extends AuthApiTestSupport {
     void 인증_테스트_2() {
         RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .when().get("/reservations/me")
+                .when().get("/api/user/reservations/me")
                 .then().log().all()
                 .statusCode(401);
     }
@@ -34,7 +34,7 @@ public class AuthenticationIntegrationTest extends AuthApiTestSupport {
         RestAssured.given().log().all()
                 .header("Authorization", loginUserToken())
                 .contentType(ContentType.JSON)
-                .when().get("/reservations/me")
+                .when().get("/api/user/reservations/me")
                 .then().log().all()
                 .statusCode(401);
     }
@@ -44,7 +44,7 @@ public class AuthenticationIntegrationTest extends AuthApiTestSupport {
     void 인증_테스트_4() {
         RestAssured.given()
                 .contentType(ContentType.JSON)
-                .when().get("/themes")
+                .when().get("/api/manager/themes")
                 .then().log().all()
                 .statusCode(401);
     }

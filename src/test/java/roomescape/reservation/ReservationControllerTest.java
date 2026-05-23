@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -20,15 +21,32 @@ import static org.hamcrest.Matchers.is;
 @Sql(scripts = {"/truncate.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class ReservationControllerTest {
 
-    private String login() {
+    private String loginManager() {
         Map<String, Object> loginRequest = new HashMap<>();
-        loginRequest.put("name", "a");
-        loginRequest.put("password", "test1");
+        loginRequest.put("name", "testAdmin");
+        loginRequest.put("password", "test2");
+        loginRequest.put("storeId", 1L);
 
         return RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(loginRequest)
-                .when().post("/login")
+                .when().post("/api/login")
+                .then().log().all()
+                .statusCode(200)
+                .extract()
+                .path("data.accessToken");
+    }
+
+    private String loginUser() {
+        Map<String, Object> loginRequest = new HashMap<>();
+        loginRequest.put("name", "a");
+        loginRequest.put("password", "test1");
+        loginRequest.put("storeId", 1L);
+
+        return RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(loginRequest)
+                .when().post("/api/login")
                 .then().log().all()
                 .statusCode(200)
                 .extract()
@@ -41,18 +59,19 @@ public class ReservationControllerTest {
         reservation.put("date", "2026-05-05");
         reservation.put("timeId", 4);
         reservation.put("themeId", 4);
+        reservation.put("storeId", 1L);
         return reservation;
     }
 
     @Test
     void 예약_생성() {
-        String accessToken = login();
+        String accessToken = loginUser();
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(ContentType.JSON)
                 .body(reservationRequest())
-                .when().post("/reservations")
+                .when().post("/api/user/reservations")
                 .then().log().all()
                 .statusCode(201)
                 .body("success", is(true))
@@ -63,48 +82,12 @@ public class ReservationControllerTest {
 
     @Test
     void 예약_조회() {
-        String accessToken = login();
+        String accessToken = loginManager();
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/reservations")
-                .then().log().all()
-                .statusCode(200)
-                .body("success", is(true))
-                .body("data.size()", is(4));
-    }
-
-    @Test
-    void 예약_추가_및_삭제() {
-        String accessToken = login();
-
-        RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + accessToken)
-                .contentType(ContentType.JSON)
-                .body(reservationRequest())
-                .when().post("/reservations")
-                .then().log().all()
-                .statusCode(201)
-                .body("success", is(true))
-                .body("data.id", is(5));
-
-        RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + accessToken)
-                .when().get("/reservations")
-                .then().log().all()
-                .statusCode(200)
-                .body("success", is(true))
-                .body("data.size()", is(5));
-
-        RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + accessToken)
-                .when().delete("/reservations/1")
-                .then().log().all()
-                .statusCode(204);
-
-        RestAssured.given().log().all()
-                .header("Authorization", "Bearer " + accessToken)
-                .when().get("/reservations")
+                .pathParam("storeId", 1L)
+                .when().get("/api/manager/stores/{storeId}/reservations")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -113,11 +96,11 @@ public class ReservationControllerTest {
 
     @Test
     void 나의_특정_예약_삭제_및_나의_예약_목록_조회() {
-        String accessToken = login();
+        String accessToken = loginUser();
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/reservations/me")
+                .when().get("/api/user/reservations/me")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
@@ -126,13 +109,13 @@ public class ReservationControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .pathParam("id", 1)
-                .when().delete("/reservations/{id}")
+                .when().delete("/api/user/reservations/{id}")
                 .then().log().all()
                 .statusCode(204);
 
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
-                .when().get("/reservations/me")
+                .when().get("/api/user/reservations/me")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))

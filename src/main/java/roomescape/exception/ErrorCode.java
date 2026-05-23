@@ -8,12 +8,14 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
     // Reservation
-    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_404", "%d번 유저의 예약(%d번)이 존재하지 않습니다."),
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION_404", "예약(%d번)이 존재하지 않습니다."),
     RESERVATION_ALREADY_EXIST(HttpStatus.CONFLICT, "RESERVATION_409", "스케줄(%d번)을 사용중인 예약이 이미 존재합니다."),
     RESERVATION_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RESERVATION_DELETE_500", "서버 내부 오류가 발생하였습니다. 관리자에게 문의해주세요."),
     RESERVATION_UPDATE_EMPTY(HttpStatus.BAD_REQUEST, "RESERVATION_400", "수정할 예약 정보가 없습니다."),
     RESERVATION_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "RESERVATION_UPDATE_500", "서버 내부 오류가 발생하였습니다. 관리자에게 문의해주세요."),
-    RESERVATION_NOT_FOUND_AFTER_UPDATE(HttpStatus.NOT_FOUND, "RESERVATION_404_AFTER_UPDATE", "수정 후 %d번 유저의 예약(%d번)을 찾을 수 없습니다."),
+    RESERVATION_NOT_FOUND_AFTER_UPDATE(HttpStatus.NOT_FOUND, "RESERVATION_404_AFTER_UPDATE", "수정 후 예약(%d번)을 찾을 수 없습니다."),
+    RESERVATION_NOT_IN_MANAGER_STORE(HttpStatus.FORBIDDEN, "RESERVATION_403_STORE", "해당 매장에서 관리할 수 없는 예약(%d번)입니다."),
+    RESERVATION_NOT_OWNED_BY_MEMBER(HttpStatus.FORBIDDEN, "RESERVATION_403_OWNER", "본인 예약(%d번)만 처리할 수 있습니다."),
 
     // Schedule
     SCHEDULE_NOT_FOUND_WITH_CONDITION(HttpStatus.NOT_FOUND, "SCHEDULE_404_WITH_CONDITION", "해당 조건의 스케줄 id가 존재하지 않습니다. date=%s, timeId=%d, themeId=%d"),
