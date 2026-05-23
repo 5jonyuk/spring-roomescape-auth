@@ -8,13 +8,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import roomescape.exception.EscapeRoomException;
 import roomescape.manager.Manager;
-import roomescape.manager.repository.ManagerRepository;
+import roomescape.manager.infrastructure.ManagerRepository;
 import roomescape.member.Role;
+import roomescape.reservation.application.ReservationService;
 import roomescape.reservation.dto.request.ReservationUpdateRequest;
 import roomescape.reservation.dto.response.ReservationSaveResponse;
-import roomescape.reservation.repository.ReservationRepository;
-import roomescape.reservation.repository.projection.ReservationDetailProjection;
-import roomescape.schedule.ScheduleService;
+import roomescape.reservation.infrastructure.ReservationRepository;
+import roomescape.reservation.infrastructure.projection.ReservationDetailProjection;
+import roomescape.schedule.application.ScheduleService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;

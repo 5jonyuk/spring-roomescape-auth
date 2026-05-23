@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import roomescape.auth.JwtTokenProvider;
 import roomescape.common.api.ApiResponse;
-import roomescape.login.request.LoginRequest;
-import roomescape.login.response.LoginResponse;
+import roomescape.login.dto.request.LoginRequest;
+import roomescape.login.dto.response.LoginResponse;
 import roomescape.member.AuthenticatedMember;
 
 @RestController

@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import roomescape.config.TestTimeConfig;
-import roomescape.reservation.controller.manager.ManagerReservationController;
+import roomescape.reservation.presentation.manager.ManagerReservationController;
 
 import java.lang.reflect.Field;
 

@@ -6,9 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import roomescape.reservation.repository.ReservationRepository;
-import roomescape.reservationtime.repository.ReservationTimeRepository;
-import roomescape.schedule.ScheduleService;
+import roomescape.reservation.infrastructure.ReservationRepository;
+import roomescape.reservationtime.application.ReservationTimeService;
+import roomescape.reservationtime.infrastructure.ReservationTimeRepository;
+import roomescape.schedule.application.ScheduleService;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;

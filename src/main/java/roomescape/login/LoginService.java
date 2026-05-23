@@ -6,7 +6,7 @@ import roomescape.exception.ErrorCode;
 import roomescape.exception.EscapeRoomException;
 import roomescape.member.AuthenticatedMember;
 import roomescape.member.Member;
-import roomescape.member.repository.MemberRepository;
+import roomescape.member.infrastructure.MemberRepository;
 
 @Service
 @RequiredArgsConstructor

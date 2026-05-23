@@ -7,8 +7,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import roomescape.reservation.repository.JdbcReservationRepository;
-import roomescape.reservation.repository.projection.ReservationDetailProjection;
+import roomescape.reservation.infrastructure.JdbcReservationRepository;
+import roomescape.reservation.infrastructure.projection.ReservationDetailProjection;
 
 import java.time.LocalDate;
 import java.util.List;

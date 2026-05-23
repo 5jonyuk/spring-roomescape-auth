@@ -7,7 +7,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import roomescape.theme.repository.JdbcThemeRepository;
+import roomescape.theme.infrastructure.JdbcThemeRepository;
 
 import java.time.LocalDate;
 import java.util.List;
