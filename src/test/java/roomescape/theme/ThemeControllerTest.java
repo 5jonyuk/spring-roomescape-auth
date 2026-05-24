@@ -101,7 +101,7 @@ public class ThemeControllerTest {
         RestAssured.given().log().all()
                 .header("Authorization", "Bearer " + accessToken)
                 .queryParam("date", "2026-05-05")
-                .when().get("/api/manager/themes")
+                .when().get("/api/themes")
                 .then().log().all()
                 .statusCode(200)
                 .body("success", is(true))
