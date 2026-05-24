@@ -1,4 +1,4 @@
-const API_BASE = new URLSearchParams(window.location.search).get("apiBase") || "http://localhost:8080";
+const API_BASE = new URLSearchParams(window.location.search).get("apiBase") || "http://localhost:8080/api";
 const statusEl = document.getElementById("status");
 const reservationSubmitEl = document.getElementById("reservation-submit");
 const selectedThemeLabelEl = document.getElementById("selected-theme-label");
@@ -30,6 +30,7 @@ const editReservationDateEl = document.getElementById("edit-reservation-date");
 const editReservationThemeEl = document.getElementById("edit-reservation-theme");
 const editAvailableTimesEl = document.getElementById("edit-available-times");
 const editReservationCancelEl = document.getElementById("edit-reservation-cancel");
+const AUTH_TOKEN_KEY = "roomescapeAccessToken";
 let selectedThemeId = null;
 let selectedTimeId = null;
 let selectedTimeLabel = null;
@@ -38,6 +39,19 @@ let editingReservation = null;
 let selectedEditTimeId = null;
 let currentLoginName = null;
 let isAuthenticated = false;
+
+function getAccessToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function setAccessToken(token) {
+  if (!token) return;
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+function clearAccessToken() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
 
 function setCommonAuthState(authenticated) {
   isAuthenticated = authenticated;
@@ -75,9 +89,13 @@ function setStatus(message, isError = false) {
 }
 
 async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const token = getAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers,
     ...options,
   });
   if (response.status === 204) return null;
@@ -281,7 +299,7 @@ function renderMyReservationCards(reservations) {
 
 async function loadMyReservations() {
   if (!isAuthenticated) return;
-  const reservations = await api("/reservations/me");
+  const reservations = await api("/user/reservations/me");
   myReservationOwnerEl.textContent = `${currentLoginName ?? "현재 사용자"}님의 예약 목록`;
   renderMyReservationCards(reservations);
 }
@@ -325,7 +343,7 @@ function renderEditAvailableTimes(items, currentTime) {
 
 async function loadEditTimesByDate(date) {
   if (!editingReservation) return;
-  const items = await api(`/times/availability?date=${date}&themeId=${editingReservation.themeId}`);
+  const items = await api(`/user/times/availability?date=${date}&themeId=${editingReservation.themeId}`);
   renderEditAvailableTimes(items, editingReservation.time);
 }
 
@@ -357,7 +375,7 @@ async function selectThemeFromListItem(target) {
     selectedThemeId = Number(themeId);
     selectedThemeName = themeName;
     selectedThemeLabelEl.textContent = `테마: ${selectedThemeName}`;
-    const items = await api(`/times/availability?date=${date}&themeId=${themeId}`);
+    const items = await api(`/user/times/availability?date=${date}&themeId=${themeId}`);
     renderAvailableTimes(items);
     setStatus(`테마 ID ${themeId} 예약 가능 시간 조회 완료`);
   } catch (error) {
@@ -401,12 +419,13 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
       return;
     }
 
-    await api("/reservations", {
+    await api("/user/reservations", {
       method: "POST",
       body: JSON.stringify({
         date,
         timeId: selectedTimeId,
         themeId: selectedThemeId,
+        storeId: 1,
       }),
     });
     setStatus(`예약 완료: ${currentLoginName} / ${date} / ${selectedTimeLabel}`);
@@ -415,7 +434,7 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
       message: `${currentLoginName}님의 예약이 완료되었습니다.`,
     });
     await loadMyReservations();
-    const items = await api(`/times/availability?date=${date}&themeId=${selectedThemeId}`);
+    const items = await api(`/user/times/availability?date=${date}&themeId=${selectedThemeId}`);
     renderAvailableTimes(items);
   } catch (error) {
     setStatus(`예약 실패: ${error.message}`, true);
@@ -484,7 +503,7 @@ myReservationCardsEl.addEventListener("click", async (e) => {
     if (!confirmed) {
       return;
     }
-    await api(`/reservations/${id}`, { method: "DELETE" });
+    await api(`/user/reservations/${id}`, { method: "DELETE" });
     await loadMyReservations();
     setStatus(`예약 #${id} 삭제 완료`);
     await showResultModal({
@@ -513,7 +532,7 @@ editReservationFormEl.addEventListener("submit", async (e) => {
   try {
     const id = editReservationIdEl.value;
     if (!selectedEditTimeId) throw new Error("수정할 시간을 선택해주세요.");
-    await api(`/reservations/${id}`, {
+    await api(`/user/reservations/${id}`, {
       method: "PATCH",
       body: JSON.stringify({
         date: editReservationDateEl.value,
@@ -548,10 +567,11 @@ loginFormEl.addEventListener("submit", async (e) => {
   try {
     const name = loginNameEl.value.trim();
     const password = loginPasswordEl.value;
-    await api("/login", {
+    const loginResponse = await api("/login", {
       method: "POST",
       body: JSON.stringify({ name, password }),
     });
+    setAccessToken(loginResponse.accessToken.replace("Bearer ", ""));
     currentLoginName = name;
     setCommonAuthState(true);
     authStatusEl.textContent = `${name} 로그인됨`;
@@ -589,6 +609,7 @@ loginOpenEl.addEventListener("click", async () => {
 
   try {
     await api("/logout", { method: "DELETE" });
+    clearAccessToken();
     currentLoginName = null;
     authStatusEl.textContent = "로그인이 필요합니다.";
     setCommonAuthState(false);
@@ -603,4 +624,7 @@ loginCancelEl.addEventListener("click", () => {
 });
 
 setTodayDefault();
-setCommonAuthState(false);
+setCommonAuthState(Boolean(getAccessToken()));
+if (getAccessToken()) {
+  authStatusEl.textContent = "로그인 상태입니다.";
+}

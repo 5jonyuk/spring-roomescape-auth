@@ -1,4 +1,4 @@
-const API_BASE = new URLSearchParams(window.location.search).get("apiBase") || "http://localhost:8080";
+const API_BASE = new URLSearchParams(window.location.search).get("apiBase") || "http://localhost:8080/api";
 const statusEl = document.getElementById("status");
 const authStatusEl = document.getElementById("auth-status");
 const loginFormEl = document.getElementById("login-form");
@@ -15,6 +15,16 @@ const resultModalEl = document.getElementById("result-modal");
 const resultTitleEl = document.getElementById("result-title");
 const resultMessageEl = document.getElementById("result-message");
 const resultOkEl = document.getElementById("result-ok");
+const AUTH_TOKEN_KEY = "roomescapeAccessToken";
+
+function getAccessToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function setAccessToken(token) {
+  if (!token) return;
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
 
 function setAdminAuthState(authenticated) {
   adminLoginSectionEl.classList.toggle("hidden", authenticated);
@@ -28,9 +38,13 @@ function setStatus(message, isError = false) {
 }
 
 async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const token = getAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers,
     ...options,
   });
   if (response.status === 204) return null;
@@ -172,17 +186,18 @@ function renderScheduleList(schedules) {
 }
 
 async function loadReservations() {
-  const reservations = await api("/reservations");
+  const storeId = Number(document.getElementById("reservation-store-id").value);
+  const reservations = await api(`/manager/stores/${storeId}/reservations`);
   renderReservationList(reservations);
 }
 
 async function loadTimes() {
-  const times = await api("/times");
+  const times = await api("/manager/times");
   renderTimeList(times);
 }
 
 async function loadSchedules() {
-  const schedules = await api("/schedules");
+  const schedules = await api("/manager/schedules");
   renderScheduleList(schedules);
 }
 
@@ -202,7 +217,7 @@ document.getElementById("theme-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    await api("/themes", {
+    await api("/manager/themes", {
       method: "POST",
       body: JSON.stringify({
         name,
@@ -228,7 +243,7 @@ document.getElementById("theme-form").addEventListener("submit", async (e) => {
 
 document.getElementById("theme-refresh").addEventListener("click", async () => {
   try {
-    const themes = await api("/themes");
+    const themes = await api("/manager/themes");
     renderThemeList(themes);
     setStatus("테마 목록 조회 완료");
   } catch (error) {
@@ -263,7 +278,7 @@ document.getElementById("theme-delete-form").addEventListener("submit", async (e
       return;
     }
 
-    await api(`/themes/${id}`, { method: "DELETE" });
+    await api(`/manager/themes/${id}`, { method: "DELETE" });
     setStatus(`테마 #${id} 삭제 완료`);
     e.target.reset();
     await showResultModal({
@@ -296,12 +311,13 @@ document.getElementById("reservation-form").addEventListener("submit", async (e)
       return;
     }
 
-    await api("/reservations", {
+    await api("/user/reservations", {
       method: "POST",
       body: JSON.stringify({
         date,
         timeId,
         themeId,
+        storeId: Number(document.getElementById("reservation-store-id").value),
       }),
     });
     await loadReservations();
@@ -335,7 +351,8 @@ document.getElementById("reservation-delete-form").addEventListener("submit", as
       return;
     }
 
-    await api(`/reservations/${id}`, { method: "DELETE" });
+    const storeId = Number(document.getElementById("reservation-store-id").value);
+    await api(`/manager/stores/${storeId}/reservations/${id}`, { method: "DELETE" });
     await loadReservations();
     setStatus(`예약 #${id} 삭제 완료`);
     e.target.reset();
@@ -376,7 +393,7 @@ document.getElementById("time-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    await api("/times", {
+    await api("/manager/times", {
       method: "POST",
       body: JSON.stringify({
         startAt,
@@ -423,7 +440,7 @@ document.getElementById("time-delete-form").addEventListener("submit", async (e)
       return;
     }
 
-    await api(`/times/${id}`, { method: "DELETE" });
+    await api(`/manager/times/${id}`, { method: "DELETE" });
     await loadTimes();
     setStatus(`시간 슬롯 #${id} 삭제 완료`);
     e.target.reset();
@@ -457,7 +474,7 @@ document.getElementById("schedule-form").addEventListener("submit", async (e) =>
       return;
     }
 
-    await api("/schedules", {
+    await api("/manager/schedules", {
       method: "POST",
       body: JSON.stringify({
         date,
@@ -496,7 +513,7 @@ document.getElementById("schedule-delete-form").addEventListener("submit", async
       return;
     }
 
-    await api(`/schedules/${id}`, { method: "DELETE" });
+    await api(`/manager/schedules/${id}`, { method: "DELETE" });
     await loadSchedules();
     setStatus(`스케줄 #${id} 삭제 완료`);
     e.target.reset();
@@ -527,7 +544,7 @@ document.getElementById("schedule-find-form").addEventListener("submit", async (
   e.preventDefault();
   try {
     const id = document.getElementById("schedule-find-id").value;
-    const schedule = await api(`/schedules/${id}`);
+    const schedule = await api(`/manager/schedules/${id}`);
     renderScheduleList([schedule]);
     setStatus(`스케줄 #${id} 단건 조회 완료`);
   } catch (error) {
@@ -547,10 +564,11 @@ loginFormEl.addEventListener("submit", async (e) => {
   try {
     const name = loginNameEl.value.trim();
     const password = loginPasswordEl.value;
-    await api("/login", {
+    const loginResponse = await api("/login", {
       method: "POST",
       body: JSON.stringify({ name, password }),
     });
+    setAccessToken(loginResponse.accessToken.replace("Bearer ", ""));
     setAdminAuthState(true);
     authStatusEl.textContent = `${name} 로그인됨`;
     setStatus("로그인 성공");
@@ -560,4 +578,7 @@ loginFormEl.addEventListener("submit", async (e) => {
 });
 
 setTodayDefault();
-setAdminAuthState(false);
+setAdminAuthState(Boolean(getAccessToken()));
+if (getAccessToken()) {
+  authStatusEl.textContent = "로그인 상태입니다.";
+}
